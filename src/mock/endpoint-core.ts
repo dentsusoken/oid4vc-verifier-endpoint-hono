@@ -1,6 +1,10 @@
+import { PresentationDefinition, PresentationSubmission } from 'oid4vc-prex';
 // TODO remove these Mocks
 
 // domain
+export class RequestId {
+  constructor(public value?: string) {}
+}
 export class TransactionId {
   constructor(public value?: string) {}
 }
@@ -66,4 +70,45 @@ export interface InitTransaction {
 
 export interface GetPresentationEvents {
   invoke(transactionId: TransactionId): QueryResponse<PresentationEventsTO>;
+}
+
+export interface GetJarmJwks {
+  invoke(id: RequestId): QueryResponse<PresentationEventsTO>;
+}
+
+export interface GetRequestObject {
+  invoke(id: RequestId): QueryResponse<string>;
+}
+
+export interface GetPresentationDefinition {
+  invoke(id: RequestId): QueryResponse<PresentationDefinition>;
+}
+
+export interface AuthorisationResponse {}
+
+export class AuthorisationResponseTO {
+  constructor(
+    public state?: string, // this is the request_id
+    public error?: string,
+    public errorDescription?: string,
+    public idToken?: string,
+    public vpToken?: string,
+    public presentationSubmission?: PresentationSubmission
+  ) {}
+}
+
+export class WalletResponseAcceptedTO {
+  constructor(public redirectUri: string) {}
+}
+
+export class DirectPost implements AuthorisationResponse {
+  constructor(response: AuthorisationResponseTO) {}
+}
+export class DirectPostJwt implements AuthorisationResponse {
+  constructor(private state: string = '', private jarm: string) {}
+}
+// export class DirectPostJwt(val state: String?, val jarm: Jwt) : AuthorisationResponse
+
+export interface PostWalletResponse {
+  invoke(walletResponse: AuthorisationResponse): WalletResponseAcceptedTO;
 }

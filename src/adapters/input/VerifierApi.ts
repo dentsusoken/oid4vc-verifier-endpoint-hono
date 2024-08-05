@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Hono, Context, TypedResponse, Handler } from 'hono';
+import { Hono, Context, Handler } from 'hono';
 import {
   GetPresentationEvents,
   GetWalletResponse,
