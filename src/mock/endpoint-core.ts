@@ -101,11 +101,13 @@ export class WalletResponseAcceptedTO {
   constructor(public redirectUri: string) {}
 }
 
-export class DirectPost implements AuthorisationResponse {
-  constructor(response: AuthorisationResponseTO) {}
-}
-export class DirectPostJwt implements AuthorisationResponse {
-  constructor(private state: string = '', private jarm: string) {}
+export namespace AuthorisationResponse {
+  export class DirectPost implements AuthorisationResponse {
+    constructor(public response: AuthorisationResponseTO) {}
+  }
+  export class DirectPostJwt implements AuthorisationResponse {
+    constructor(public state: string = '', public jarm: string) {}
+  }
 }
 // export class DirectPostJwt(val state: String?, val jarm: Jwt) : AuthorisationResponse
 

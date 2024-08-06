@@ -15,6 +15,7 @@
  */
 import * as jose from 'jose';
 import {
+  AuthorisationResponse,
   AuthorisationResponseTO,
   GetJarmJwks,
   GetPresentationDefinition,
@@ -24,7 +25,7 @@ import {
   RequestId,
 } from '../../mock/endpoint-core';
 import { Handler, Hono } from 'hono';
-import { PresentationDefinition } from 'oid4vc-prex';
+import { PresentationDefinition, PresentationExchange } from 'oid4vc-prex';
 
 const GET_PUBLIC_JWK_SET_PATH = '/wallet/public-keys.json';
 
@@ -51,6 +52,9 @@ const JARM_JWK_SET_PATH = '/wallet/jarm/:requestId/jwks.json';
  */
 const WALLET_RESPONSE_PATH = '/wallet/direct_post';
 
+/**
+ * The WEB API available to the wallet
+ */
 export class WalletApi {
   constructor(
     private getRequestObject: GetRequestObject,
@@ -60,6 +64,9 @@ export class WalletApi {
     private signingKey: jose.JWK
   ) {}
 
+  /**
+   * The routes available to the wallet
+   */
   public route = new Hono()
     .get(REQUEST_JWT_PATH, this.handleGetRequestObject())
     .get(PRESENTATION_DEFINITION_PATH, this.handleGetPresentationDefinition())
@@ -67,6 +74,11 @@ export class WalletApi {
     .get(GET_PUBLIC_JWK_SET_PATH, this.handleGetPublicJwkSet())
     .get(JARM_JWK_SET_PATH, this.handleGetJarmJwks());
 
+  /**
+   * Handles a request placed by the wallet, input order to obtain
+   * the Request Object of the presentation.
+   * If found, the Request Object will be returned as JWT
+   */
   private handleGetRequestObject(): Handler {
     return (c) => {
       const requestObjectFound = (jwt: string) =>
@@ -88,6 +100,10 @@ export class WalletApi {
       }
     };
   }
+  /**
+   * Handles a request placed by wallet, input order to obtain
+   * the [PresentationDefinition] of the presentation
+   */
   private handleGetPresentationDefinition(): Handler {
     return (c) => {
       const pdFound = (pd: PresentationDefinition) => c.json(pd, 200);
@@ -110,13 +126,18 @@ export class WalletApi {
       }
     };
   }
+  /**
+   * Handles a POST request placed by the wallet, input order to submit
+   * the [AuthorisationResponse], containing the id_token, presentation_submission
+   * and the verifiableCredentials
+   */
   private handlePostWalletResponse(): Handler {
     return async (c) => {
       try {
         console.info('Handling PostWalletResponse ...');
-        const walletResponse = JSON.parse(
-          (await c.req.formData()).get('walletResponse') || '{}'
-        ) as AuthorisationResponseTO;
+        const walletResponse = await WalletApi.walletResponse(
+          JSON.parse((await c.req.formData()).get('walletResponse') || '{}')
+        );
         console.log('walletResponse :>> ', walletResponse);
         try {
           // TODO - this is not correct
@@ -142,6 +163,7 @@ export class WalletApi {
       }
     };
   }
+
   private handleGetPublicJwkSet(): Handler {
     return (c) => {
       console.info('Handling GetPublicJwkSet ...');
@@ -153,6 +175,9 @@ export class WalletApi {
       });
     };
   }
+  /**
+   * Handles the GET request for fetching the JWKS to be used for JARM.
+   */
   private handleGetJarmJwks(): Handler {
     return (c) => {
       const requestId = new RequestId(c.req.param('requestId'));
@@ -173,4 +198,46 @@ export class WalletApi {
       }
     };
   }
+}
+export namespace WalletApi {
+  export const walletResponse = async (
+    req: Record<string, string | undefined>
+  ): Promise<AuthorisationResponse> => {
+    const directPost = async () => {
+      const {
+        state,
+        idToken,
+        vpToken,
+        presentationSubmission,
+        error,
+        errorDescription,
+      } = req;
+
+      console.log('req :>> ', req);
+
+      const response = new AuthorisationResponseTO(
+        state,
+        error,
+        errorDescription,
+        idToken,
+        vpToken,
+        (
+          await PresentationExchange.jsonParse.decodePresentationSubmission(
+            presentationSubmission!
+          )
+        ).getOrNull() || undefined
+      );
+      return new AuthorisationResponse.DirectPost(response);
+    };
+
+    const directPostJwt = () => {
+      const { state, response: jwt } = req;
+      if (!jwt) {
+        return;
+      }
+      return new AuthorisationResponse.DirectPostJwt(state, jwt);
+    };
+
+    return directPostJwt() || (await directPost());
+  };
 }

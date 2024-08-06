@@ -121,7 +121,8 @@ describe('WalletApi', async () => {
       formData.append(
         'walletResponse',
         JSON.stringify({
-          redirectUri: 'http://localhost:3000',
+          state: 'state',
+          response: 'jarm',
         })
       );
       const response = await walletApi.request('/wallet/direct_post', {
@@ -144,7 +145,8 @@ describe('WalletApi', async () => {
       formData.append(
         'walletResponse',
         JSON.stringify({
-          redirectUri: 'http://localhost:3000',
+          state: 'state',
+          response: 'jarm',
         })
       );
       const response = await walletApi.request('/wallet/direct_post', {
@@ -169,7 +171,8 @@ describe('WalletApi', async () => {
       formData.append(
         'walletResponse',
         JSON.stringify({
-          redirectUri: 'http://localhost:3000',
+          state: 'state',
+          response: 'jarm',
         })
       );
       const response = await walletApi.request('/wallet/direct_post', {
