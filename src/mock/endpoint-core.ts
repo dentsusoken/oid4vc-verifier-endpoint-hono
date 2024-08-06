@@ -3,7 +3,7 @@ import { PresentationDefinition, PresentationSubmission } from 'oid4vc-prex';
 
 // domain
 export class RequestId {
-  constructor(public value?: string) {}
+  constructor(public value: string) {}
 }
 export class TransactionId {
   constructor(public value?: string) {}
@@ -11,6 +11,14 @@ export class TransactionId {
 
 export class ResponseCode {
   constructor(public value?: string) {}
+}
+
+type PresentationRelatedUrlBuilder<ID> = { (arg: ID): string };
+
+export namespace EmbedOption {
+  export class ByReference<T> {
+    constructor(public value: PresentationRelatedUrlBuilder<T>) {}
+  }
 }
 
 export type InitTransactionTO = {

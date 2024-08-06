@@ -7,6 +7,7 @@ import {
   GetRequestObject,
   PostWalletResponse,
   QueryResponse,
+  RequestId,
   WalletResponseAcceptedTO,
 } from '../../mock/endpoint-core';
 
@@ -226,6 +227,61 @@ describe('WalletApi', async () => {
         method: 'GET',
       });
       expect(response.status).toBe(400);
+    });
+  });
+  describe('requestJwtByReference', () => {
+    it('should return url builder', async () => {
+      const urlBuilder = WalletApi.requestJwtByReference('https://example.com');
+
+      expect(urlBuilder.value(new RequestId('1234'))).toBe(
+        'https://example.com/wallet/request.jwt/1234'
+      );
+    });
+  });
+  describe('presentationDefinitionByReference', () => {
+    it('should return url builder', async () => {
+      const urlBuilder = WalletApi.presentationDefinitionByReference(
+        'https://example.com'
+      );
+
+      expect(urlBuilder.value(new RequestId('1234'))).toBe(
+        'https://example.com/wallet/pd/1234'
+      );
+    });
+  });
+  describe('publicJwkSet', () => {
+    it('should return url builder', async () => {
+      const urlBuilder = WalletApi.publicJwkSet('https://example.com');
+
+      expect(urlBuilder).toBe('https://example.com/wallet/public-keys.json');
+    });
+  });
+  describe('jarmJwksByReference', () => {
+    it('should return url builder', async () => {
+      const urlBuilder = WalletApi.jarmJwksByReference('https://example.com');
+
+      expect(urlBuilder.value(new RequestId('1234'))).toBe(
+        'https://example.com/wallet/public-keys.json'
+      );
+    });
+    describe('directPost', () => {
+      it('should return url builder', async () => {
+        const urlBuilder = WalletApi.directPost('https://example.com');
+
+        expect(urlBuilder).toBe('https://example.com/wallet/direct_post');
+      });
+    });
+    describe('urlBuilder', () => {
+      it('should return url builder', async () => {
+        const urlBuilder = WalletApi.urlBuilder(
+          'https://example.com',
+          '/:requestId'
+        );
+
+        expect(urlBuilder.value(new RequestId('1234'))).toBe(
+          'https://example.com/1234'
+        );
+      });
     });
   });
 });

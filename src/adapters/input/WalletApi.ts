@@ -17,6 +17,7 @@ import * as jose from 'jose';
 import {
   AuthorisationResponse,
   AuthorisationResponseTO,
+  EmbedOption,
   GetJarmJwks,
   GetPresentationDefinition,
   GetRequestObject,
@@ -239,5 +240,28 @@ export namespace WalletApi {
     };
 
     return directPostJwt() || (await directPost());
+  };
+
+  export const requestJwtByReference = (baseUrl: string) => {
+    return urlBuilder(baseUrl, REQUEST_JWT_PATH);
+  };
+  export const presentationDefinitionByReference = (baseUrl: string) => {
+    return urlBuilder(baseUrl, PRESENTATION_DEFINITION_PATH);
+  };
+  export const publicJwkSet = (baseUrl: string) => {
+    return `${baseUrl}${GET_PUBLIC_JWK_SET_PATH}`;
+  };
+  export const jarmJwksByReference = (baseUrl: string) => {
+    return urlBuilder(baseUrl, GET_PUBLIC_JWK_SET_PATH);
+  };
+
+  export const directPost = (baseUrl: string) => {
+    return `${baseUrl}${WALLET_RESPONSE_PATH}`;
+  };
+
+  export const urlBuilder = (baseUrl: string, pathTemplate: string) => {
+    return new EmbedOption.ByReference(function (requestId: RequestId) {
+      return `${baseUrl}${pathTemplate.replace(':requestId', requestId.value)}`;
+    });
   };
 }
