@@ -17,14 +17,18 @@ import { Hono, Context, Handler } from 'hono';
 import {
   GetPresentationEvents,
   GetWalletResponse,
-  InitTransaction,
-  InitTransactionTO,
   PresentationEventsTO,
   QueryResponse,
   ResponseCode,
   TransactionId,
   WalletResponseTO,
 } from '../../mock/endpoint-core';
+import { HonoConfiguration } from '../../di/HonoConfiguration';
+import {
+  PortsInputImpl,
+  PortsOutImpl,
+  InitTransactionTO,
+} from 'oid4vc-verifier-endpoint-core';
 
 const INIT_TRANSACTION_PATH = '/ui/presentations';
 const WALLET_RESPONSE_PATH = '/ui/presentations/:transactionId';
@@ -34,7 +38,7 @@ export class VerifierApi {
   // public route;
 
   constructor(
-    private initTransaction: InitTransaction,
+    // private initTransaction: InitTransaction,
     private getWalletResponse: GetWalletResponse,
     private getPresentationEvents: GetPresentationEvents
   ) {
@@ -51,21 +55,23 @@ export class VerifierApi {
 
   private handleInitTransation(): Handler {
     return async (c) => {
-      try {
-        const input = await c.req.json<InitTransactionTO>();
-        console.info(`Handling InitTransaction nonce=${input.nonce} ... `);
-        const it = this.initTransaction.invoke(input);
+      const configuration = new HonoConfiguration(c);
+      const portsOut = new PortsOutImpl(configuration);
+      const portsInput = new PortsInputImpl(configuration, portsOut);
+      const initTransaction = portsInput.initTransaction();
 
-        if (it) {
-          console.info(`Initiated transaction tx ${it.transactionId}`);
-          return c.json(it, 200);
-        } else {
-          return asBadRequest(c, it);
-        }
-      } catch (t) {
-        console.warn('While handling InitTransaction', t);
-        return asBadRequest(c);
+      const input = InitTransactionTO.deserialize(await c.req.json());
+      console.info(`Handling InitTransaction nonce=${input.nonce} ... `);
+
+      const result = await initTransaction(input);
+      if (result.isFailure) {
+        const error = result.exceptionOrUndefined();
+        console.warn('While handling InitTransaction', error);
+        return asBadRequest(c, error);
       }
+      const it = result.getOrUndefined()!;
+      console.info(`Initiated transaction tx ${it.transactionId}`);
+      return c.json(it.serialize());
     };
   }
 
