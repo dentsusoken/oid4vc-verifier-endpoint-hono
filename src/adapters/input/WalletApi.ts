@@ -15,12 +15,10 @@
  */
 import * as jose from 'jose';
 import {
-  AuthorisationResponse,
-  AuthorisationResponseTO,
+  // AuthorisationResponse,
   EmbedOption,
   GetJarmJwks,
   GetPresentationDefinition,
-  GetRequestObject,
   PostWalletResponse,
   RequestId,
 } from '../../mock/endpoint-core';
@@ -30,6 +28,8 @@ import {
   PortsInputImpl,
   PortsOutImpl,
   QueryResponse,
+  AuthorizationResponse,
+  AuthorizationResponseData,
 } from 'oid4vc-verifier-endpoint-core';
 import { PresentationDefinition, PresentationExchange } from 'oid4vc-prex';
 import { HonoConfiguration } from '../../di/HonoConfiguration';
@@ -66,10 +66,10 @@ export class WalletApi {
   constructor(
     // private getRequestObject: GetRequestObject,
     private getPresentationDefinition: GetPresentationDefinition,
-    private postWalletResponse: PostWalletResponse,
-    private getJarmJwks: GetJarmJwks,
-    private signingKey: jose.JWK
-  ) {}
+    // private postWalletResponse: PostWalletResponse,
+    private getJarmJwks: GetJarmJwks
+  ) // private signingKey: jose.JWK
+  {}
 
   /**
    * The routes available to the wallet
@@ -145,21 +145,26 @@ export class WalletApi {
   private handlePostWalletResponse(): Handler {
     return async (c) => {
       try {
+        const configuration = new HonoConfiguration(c);
+        const portsOut = new PortsOutImpl(configuration);
+        const portsInput = new PortsInputImpl(configuration, portsOut);
+        const postWalletResponse = portsInput.postWalletResponse();
+
         console.info('Handling PostWalletResponse ...');
+
         const walletResponse = await WalletApi.walletResponse(
-          JSON.parse((await c.req.formData()).get('walletResponse') || '{}')
+          Object.fromEntries((await c.req.formData()).entries())
         );
-        console.log('walletResponse :>> ', walletResponse);
         try {
-          // TODO - this is not correct
-          const response = this.postWalletResponse.invoke(walletResponse);
+          const result = await postWalletResponse(walletResponse);
+          const response = result.getOrThrow();
           console.info('PostWalletResponse processed');
           if (!response) {
             console.info('Verifier UI will poll for Wallet Response');
             return c.json({}, 200);
           } else {
             console.info(`Wallet must redirect to ${response.redirectUri}`);
-            return c.json(response, 200);
+            return c.json({ redirect_uri: response.redirectUri }, 200);
           }
         } catch (e) {
           console.error('$error while handling post of wallet response ');
@@ -179,7 +184,7 @@ export class WalletApi {
     return (c) => {
       console.info('Handling GetPublicJwkSet ...');
       const publicJwkSet = {
-        keys: [this.signingKey],
+        keys: [JSON.parse(c.env.JAR_SIGNING_PUBLIC_JWK)],
       } as jose.JSONWebKeySet;
       return c.json(publicJwkSet, 200, {
         'Content-Type': 'application/jwk-set+json; charset=UTF-8',
@@ -213,40 +218,39 @@ export class WalletApi {
 export namespace WalletApi {
   export const walletResponse = async (
     req: Record<string, string | undefined>
-  ): Promise<AuthorisationResponse> => {
+  ): Promise<AuthorizationResponse> => {
     const directPost = async () => {
       const {
         state,
-        idToken,
-        vpToken,
-        presentationSubmission,
+        id_token,
+        vp_token,
+        presentation_submission,
         error,
-        errorDescription,
+        error_description,
       } = req;
 
-      console.log('req :>> ', req);
-
-      const response = new AuthorisationResponseTO(
+      const response: AuthorizationResponseData = {
         state,
         error,
-        errorDescription,
-        idToken,
-        vpToken,
-        (
-          await PresentationExchange.jsonParse.decodePresentationSubmission(
-            presentationSubmission!
-          )
-        ).getOrNull() || undefined
-      );
-      return new AuthorisationResponse.DirectPost(response);
+        errorDescription: error_description,
+        idToken: id_token,
+        vpToken: vp_token,
+        presentationSubmission:
+          (
+            await PresentationExchange.jsonParse.decodePresentationSubmission(
+              presentation_submission!
+            )
+          ).getOrNull() || undefined,
+      };
+      return new AuthorizationResponse.DirectPost(response);
     };
 
     const directPostJwt = () => {
       const { state, response: jwt } = req;
-      if (!jwt) {
+      if (!jwt || !state) {
         return;
       }
-      return new AuthorisationResponse.DirectPostJwt(state, jwt);
+      return new AuthorizationResponse.DirectPostJwt(state, jwt);
     };
 
     return directPostJwt() || (await directPost());
