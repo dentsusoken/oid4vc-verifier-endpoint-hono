@@ -67,9 +67,8 @@ export class WalletApi {
     // private getRequestObject: GetRequestObject,
     private getPresentationDefinition: GetPresentationDefinition,
     // private postWalletResponse: PostWalletResponse,
-    private getJarmJwks: GetJarmJwks
-  ) // private signingKey: jose.JWK
-  {}
+    private getJarmJwks: GetJarmJwks // private signingKey: jose.JWK
+  ) {}
 
   /**
    * The routes available to the wallet
@@ -183,8 +182,10 @@ export class WalletApi {
   private handleGetPublicJwkSet(): Handler {
     return (c) => {
       console.info('Handling GetPublicJwkSet ...');
+      const jwk = JSON.parse(c.env.JAR_SIGNING_PRIVATE_JWK);
+      delete jwk.d;
       const publicJwkSet = {
-        keys: [JSON.parse(c.env.JAR_SIGNING_PUBLIC_JWK)],
+        keys: [jwk],
       } as jose.JSONWebKeySet;
       return c.json(publicJwkSet, 200, {
         'Content-Type': 'application/jwk-set+json; charset=UTF-8',
