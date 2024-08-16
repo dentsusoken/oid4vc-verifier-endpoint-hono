@@ -14,34 +14,26 @@
  * limitations under the License.
  */
 import { Hono, Context, Handler } from 'hono';
-import {
-  GetPresentationEvents,
-  GetWalletResponse,
-  PresentationEventsTO,
-  QueryResponse,
-  ResponseCode,
-  TransactionId,
-  WalletResponseTO,
-} from '../../mock/endpoint-core';
 import { HonoConfiguration } from '../../di/HonoConfiguration';
 import {
   PortsInputImpl,
   PortsOutImpl,
   InitTransactionTO,
+  TransactionId,
+  ResponseCode,
+  WalletResponseTO,
+  QueryResponse,
 } from 'oid4vc-verifier-endpoint-core';
 
 const INIT_TRANSACTION_PATH = '/ui/presentations';
 const WALLET_RESPONSE_PATH = '/ui/presentations/:transactionId';
-const EVENTS_RESPONSE_PATH = '/ui/presentations/:transactionId/events';
+// const EVENTS_RESPONSE_PATH = '/ui/presentations/:transactionId/events';
 
 export class VerifierApi {
   // public route;
 
-  constructor(
-    // private initTransaction: InitTransaction,
-    private getWalletResponse: GetWalletResponse,
-    private getPresentationEvents: GetPresentationEvents
-  ) {
+  constructor() {
+    // private getPresentationEvents: GetPresentationEvents // private getWalletResponse: GetWalletResponse, // private initTransaction: InitTransaction,
     // this.route = new Hono()
     //   .post(INIT_TRANSACTION_PATH, this.handleInitTransation)
     //   .get(WALLET_RESPONSE_PATH, this.handleGetWalletResponse)
@@ -50,8 +42,8 @@ export class VerifierApi {
 
   public route = new Hono()
     .post(INIT_TRANSACTION_PATH, this.handleInitTransation())
-    .get(WALLET_RESPONSE_PATH, this.handleGetWalletResponse())
-    .get(EVENTS_RESPONSE_PATH, this.handleGetPresentationEvents());
+    .get(WALLET_RESPONSE_PATH, this.handleGetWalletResponse());
+  // .get(EVENTS_RESPONSE_PATH, this.handleGetPresentationEvents());
 
   private handleInitTransation(): Handler {
     return async (c) => {
@@ -80,23 +72,28 @@ export class VerifierApi {
    * the wallet authorization response
    */
   private handleGetWalletResponse(): Handler {
-    return (c) => {
+    return async (c) => {
       const found = (walletResponse: WalletResponseTO) =>
-        c.json(walletResponse, 200);
+        c.json(walletResponse.serialize(), 200);
 
+      const configuration = new HonoConfiguration(c);
+      const portsOut = new PortsOutImpl(configuration);
+      const portsInput = new PortsInputImpl(configuration, portsOut);
+      const getWalletResponse = portsInput.getWalletResponse();
+
+      const responseCodeValue = c.req.query('response_code');
       const transactionId = new TransactionId(c.req.param('transactionId'));
-      const responseCode = new ResponseCode(c.req.query('response_code'));
+      const responseCode = responseCodeValue
+        ? new ResponseCode(responseCodeValue)
+        : undefined;
 
       console.info(
         `Handling GetWalletResponse for tx ${
           transactionId.value
-        } and response_code: ${
-          responseCode?.value ? responseCode?.value : 'n/a'
-        }. ...`
+        } and response_code: ${responseCode ? responseCode.value : 'n/a'}. ...`
       );
 
-      const result = this.getWalletResponse.invoke(transactionId, responseCode);
-      console.log('result :>> ', result);
+      const result = await getWalletResponse(transactionId, responseCode);
       if (result.constructor === QueryResponse.NotFound) {
         return c.text('', 404);
       }
@@ -104,7 +101,7 @@ export class VerifierApi {
         return asBadRequest(c);
       }
       if (result.constructor === QueryResponse.Found) {
-        return found((result as QueryResponse.Found<WalletResponseTO>).value);
+        return found(result.value);
       }
       return c.text('', 500);
     };
@@ -114,31 +111,31 @@ export class VerifierApi {
    * Handles a request placed by verifier, input order to obtain
    * presentation logs
    */
-  private handleGetPresentationEvents(): Handler {
-    return (c) => {
-      const found = (events: PresentationEventsTO) => c.json(events, 200);
+  // private handleGetPresentationEvents(): Handler {
+  //   return (c) => {
+  //     const found = (events: PresentationEventsTO) => c.json(events, 200);
 
-      const transactionId = new TransactionId(c.req.param('transactionId'));
-      console.info(
-        `Handling GetPresentationEvents for tx ${transactionId} ...`
-      );
+  //     const transactionId = new TransactionId(c.req.param('transactionId'));
+  //     console.info(
+  //       `Handling GetPresentationEvents for tx ${transactionId} ...`
+  //     );
 
-      const result = this.getPresentationEvents.invoke(transactionId);
-      console.log('result :>> ', result);
-      if (result.constructor === QueryResponse.NotFound) {
-        return c.text('', 404);
-      }
-      if (result.constructor === QueryResponse.InvalidState) {
-        return asBadRequest(c);
-      }
-      if (result.constructor === QueryResponse.Found) {
-        return found(
-          (result as QueryResponse.Found<PresentationEventsTO>).value
-        );
-      }
-      return c.text('', 500);
-    };
-  }
+  //     const result = this.getPresentationEvents.invoke(transactionId);
+  //     console.log('result :>> ', result);
+  //     if (result.constructor === QueryResponse.NotFound) {
+  //       return c.text('', 404);
+  //     }
+  //     if (result.constructor === QueryResponse.InvalidState) {
+  //       return asBadRequest(c);
+  //     }
+  //     if (result.constructor === QueryResponse.Found) {
+  //       return found(
+  //         (result as QueryResponse.Found<PresentationEventsTO>).value
+  //       );
+  //     }
+  //     return c.text('', 500);
+  //   };
+  // }
 }
 
 // TODO mapOf("error" to this)が実装できてない
