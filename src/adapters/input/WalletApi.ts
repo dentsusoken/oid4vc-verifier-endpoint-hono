@@ -22,11 +22,17 @@ import {
   GetPresentationDefinition,
   GetRequestObject,
   PostWalletResponse,
-  QueryResponse,
   RequestId,
 } from '../../mock/endpoint-core';
 import { Handler, Hono } from 'hono';
+import {
+  Jwt,
+  PortsInputImpl,
+  PortsOutImpl,
+  QueryResponse,
+} from 'oid4vc-verifier-endpoint-core';
 import { PresentationDefinition, PresentationExchange } from 'oid4vc-prex';
+import { HonoConfiguration } from '../../di/HonoConfiguration';
 
 const GET_PUBLIC_JWK_SET_PATH = '/wallet/public-keys.json';
 
@@ -58,7 +64,7 @@ const WALLET_RESPONSE_PATH = '/wallet/direct_post';
  */
 export class WalletApi {
   constructor(
-    private getRequestObject: GetRequestObject,
+    // private getRequestObject: GetRequestObject,
     private getPresentationDefinition: GetPresentationDefinition,
     private postWalletResponse: PostWalletResponse,
     private getJarmJwks: GetJarmJwks,
@@ -81,17 +87,21 @@ export class WalletApi {
    * If found, the Request Object will be returned as JWT
    */
   private handleGetRequestObject(): Handler {
-    return (c) => {
+    return async (c) => {
       const requestObjectFound = (jwt: string) =>
         c.text(jwt, 200, { 'Content-Type': 'application/oauth-authz-req+jwt' });
 
+      const configuration = new HonoConfiguration(c);
+      const portsOut = new PortsOutImpl(configuration);
+      const portsInput = new PortsInputImpl(configuration, portsOut);
+      const getRequestObject = portsInput.getRequestObject();
       const requestId = new RequestId(c.req.param('requestId'));
+
       console.info(`Handling GetRequestObject for ${requestId.value} ...`);
-      const result = this.getRequestObject.invoke(requestId);
+
+      const result = await getRequestObject(requestId);
       if (result.constructor === QueryResponse.Found) {
-        return requestObjectFound(
-          (result as QueryResponse.Found<string>).value
-        );
+        return requestObjectFound((result as QueryResponse.Found<Jwt>).value);
       }
       if (result.constructor === QueryResponse.NotFound) {
         return c.text('', 404);
