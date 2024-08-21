@@ -9,6 +9,7 @@
   "dependencies": {
     "hono": "^4.5.3",
     "jose": "^5.6.3",
+    "oid4vc-prex": "file:../oid4vc-prex",
     "oid4vc-verifier-endpoint-core": "file:../oid4vc-verifier-endpoint-core"
   },
   "devDependencies": {

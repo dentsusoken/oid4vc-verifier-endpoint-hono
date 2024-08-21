@@ -24,6 +24,7 @@ import {
   WalletResponseTO,
   QueryResponse,
 } from 'oid4vc-verifier-endpoint-core';
+import { getDI } from './getDI';
 
 const INIT_TRANSACTION_PATH = '/ui/presentations';
 const WALLET_RESPONSE_PATH = '/ui/presentations/:transactionId';
@@ -47,9 +48,7 @@ export class VerifierApi {
 
   private handleInitTransation(): Handler {
     return async (c) => {
-      const configuration = new HonoConfiguration(c);
-      const portsOut = new PortsOutImpl(configuration);
-      const portsInput = new PortsInputImpl(configuration, portsOut);
+      const { portsInput } = getDI(c);
       const initTransaction = portsInput.initTransaction();
 
       const input = InitTransactionTO.deserialize(await c.req.json());
@@ -76,9 +75,7 @@ export class VerifierApi {
       const found = (walletResponse: WalletResponseTO) =>
         c.json(walletResponse.serialize(), 200);
 
-      const configuration = new HonoConfiguration(c);
-      const portsOut = new PortsOutImpl(configuration);
-      const portsInput = new PortsInputImpl(configuration, portsOut);
+      const { portsInput } = getDI(c);
       const getWalletResponse = portsInput.getWalletResponse();
 
       const responseCodeValue = c.req.query('response_code');

@@ -7,5 +7,6 @@ export type Env = {
     CLIENT_ID_SCHEME: ClientIdSchemeName;
     PUBLIC_URL: string;
     CORS_ORIGIN: string;
+    PRESENTATION_KV: KVNamespace;
   };
 };

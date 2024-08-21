@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 import * as jose from 'jose';
-import {
-  // AuthorisationResponse,
-  EmbedOption,
-  GetJarmJwks,
-  GetPresentationDefinition,
-  PostWalletResponse,
-  RequestId,
-} from '../../mock/endpoint-core';
 import { Handler, Hono } from 'hono';
 import {
   Jwt,
-  PortsInputImpl,
-  PortsOutImpl,
   QueryResponse,
   AuthorizationResponse,
   AuthorizationResponseData,
+  EmbedOption,
+  GetJarmJwks,
+  GetPresentationDefinition,
+  RequestId,
+  UrlBuilder,
 } from 'oid4vc-verifier-endpoint-core';
 import { PresentationDefinition, PresentationExchange } from 'oid4vc-prex';
-import { HonoConfiguration } from '../../di/HonoConfiguration';
+import { getDI } from './getDI';
 
 const GET_PUBLIC_JWK_SET_PATH = '/wallet/public-keys.json';
 
@@ -90,9 +85,7 @@ export class WalletApi {
       const requestObjectFound = (jwt: string) =>
         c.text(jwt, 200, { 'Content-Type': 'application/oauth-authz-req+jwt' });
 
-      const configuration = new HonoConfiguration(c);
-      const portsOut = new PortsOutImpl(configuration);
-      const portsInput = new PortsInputImpl(configuration, portsOut);
+      const { portsInput } = getDI(c);
       const getRequestObject = portsInput.getRequestObject();
       const requestId = new RequestId(c.req.param('requestId'));
 
@@ -122,7 +115,7 @@ export class WalletApi {
       console.info(
         `Handling GetPresentationDefinition for ${requestId.value} ...`
       );
-      const result = this.getPresentationDefinition.invoke(requestId);
+      const result = this.getPresentationDefinition(requestId);
       if (result.constructor === QueryResponse.NotFound) {
         return c.text('', 404);
       }
@@ -144,9 +137,7 @@ export class WalletApi {
   private handlePostWalletResponse(): Handler {
     return async (c) => {
       try {
-        const configuration = new HonoConfiguration(c);
-        const portsOut = new PortsOutImpl(configuration);
-        const portsInput = new PortsInputImpl(configuration, portsOut);
+        const { portsInput } = getDI(c);
         const postWalletResponse = portsInput.postWalletResponse();
 
         console.info('Handling PostWalletResponse ...');
@@ -200,7 +191,7 @@ export class WalletApi {
       const requestId = new RequestId(c.req.param('requestId'));
       console.info(`Handling GetJarmJwks for ${requestId.value} ...`);
 
-      const queryResponse = this.getJarmJwks.invoke(requestId);
+      const queryResponse = this.getJarmJwks(requestId);
 
       if (queryResponse.constructor === QueryResponse.NotFound) {
         return c.text('', 404);
@@ -275,8 +266,12 @@ export namespace WalletApi {
   };
 
   export const urlBuilder = (baseUrl: string, pathTemplate: string) => {
-    return new EmbedOption.ByReference(function (requestId: RequestId) {
-      return `${baseUrl}${pathTemplate.replace(':requestId', requestId.value)}`;
-    });
+    return new EmbedOption.ByReference(
+      new UrlBuilder.WithRequestIdTemplate(`${baseUrl}${pathTemplate}`)
+    );
+
+    // return new EmbedOption.ByReference(function (requestId: RequestId) {
+    //   return `${baseUrl}${pathTemplate.replace(':requestId', requestId.value)}`;
+    // });
   };
 }
