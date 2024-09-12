@@ -10,18 +10,22 @@ import {
 import { Env } from '../env';
 
 export class HonoConfiguration extends AbstractConfiguration {
-  constructor(private c: Context<Env>) {
+  #c?: Context<Env>;
+
+  constructor(c?: Context<Env>) {
     super();
+    this.#c = c;
   }
 
-  jarSigningPrivateJwk = (): string => this.c.env.JAR_SIGNING_PRIVATE_JWK;
-  // jarSigningPrivateJwk = (): string => SINGING_PRIVATE_JWK_FOR_TEST_ONLY;
+  jarSigningPrivateJwk = (): string =>
+    this.#c?.env.JAR_SIGNING_PRIVATE_JWK || '';
 
-  clientId = (): string => this.c.env.CLIENT_ID;
+  clientId = (): string => this.#c?.env.CLIENT_ID || '';
 
-  clientIdSchemeName = (): ClientIdSchemeName => this.c.env.CLIENT_ID_SCHEME;
+  clientIdSchemeName = (): ClientIdSchemeName =>
+    this.#c?.env.CLIENT_ID_SCHEME || 'x509_san_dns';
 
-  publicUrl = (): string => this.c.env.PUBLIC_URL;
+  publicUrl = (): string => this.#c?.env.PUBLIC_URL || '';
 
   jarOptionName = (): EmbedOptionName => 'by_reference';
 

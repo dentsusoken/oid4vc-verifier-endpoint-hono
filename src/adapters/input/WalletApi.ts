@@ -21,59 +21,42 @@ import {
   AuthorizationResponse,
   AuthorizationResponseData,
   EmbedOption,
-  GetJarmJwks,
-  GetPresentationDefinition,
   RequestId,
   UrlBuilder,
 } from 'oid4vc-verifier-endpoint-core';
-import { PresentationDefinition, PresentationExchange } from 'oid4vc-prex';
+import { PresentationExchange } from 'oid4vc-prex';
 import { getDI } from './getDI';
-
-const GET_PUBLIC_JWK_SET_PATH = '/wallet/public-keys.json';
-
-/**
- * Path template for the route for
- * getting the presentation's request object
- */
-const REQUEST_JWT_PATH = '/wallet/request.jwt/:requestId';
-
-/**
- * Path template for the route for
- * getting the presentation definition
- */
-const PRESENTATION_DEFINITION_PATH = '/wallet/pd/:requestId';
-
-/**
- * Path template for the route for getting the JWKS that contains the Ephemeral Key for JARM.
- */
-const JARM_JWK_SET_PATH = '/wallet/jarm/:requestId/jwks.json';
-
-/**
- * Path template for the route for
- * posting the Authorisation Response
- */
-const WALLET_RESPONSE_PATH = '/wallet/direct_post';
+import { HonoConfiguration } from '../../di/HonoConfiguration';
+import { Env } from '../../env';
 
 /**
  * The WEB API available to the wallet
  */
 export class WalletApi {
-  constructor(
-    // private getRequestObject: GetRequestObject,
-    private getPresentationDefinition: GetPresentationDefinition,
-    // private postWalletResponse: PostWalletResponse,
-    private getJarmJwks: GetJarmJwks // private signingKey: jose.JWK
-  ) {}
-
   /**
    * The routes available to the wallet
    */
-  public route = new Hono()
-    .get(REQUEST_JWT_PATH, this.handleGetRequestObject())
-    .get(PRESENTATION_DEFINITION_PATH, this.handleGetPresentationDefinition())
-    .post(WALLET_RESPONSE_PATH, this.handlePostWalletResponse())
-    .get(GET_PUBLIC_JWK_SET_PATH, this.handleGetPublicJwkSet())
-    .get(JARM_JWK_SET_PATH, this.handleGetJarmJwks());
+  public route: Hono<Env>;
+
+  constructor() {
+    const configuration = new HonoConfiguration();
+
+    this.route = new Hono<Env>()
+      .get(
+        configuration.requestJWTPath(':requestId'),
+        this.handleGetRequestObject()
+      )
+      .get(
+        configuration.presentationDefinitionPath(':requestId'),
+        this.handleGetPresentationDefinition()
+      )
+      .post(configuration.walletResponsePath(), this.handlePostWalletResponse())
+      .get(configuration.getPublicJWKSetPath(), this.handleGetPublicJwkSet())
+      .get(
+        configuration.jarmJWKSetPath(':requestId'),
+        this.handleGetJarmJwks()
+      );
+  }
 
   /**
    * Handles a request placed by the wallet, input order to obtain
@@ -109,24 +92,25 @@ export class WalletApi {
    */
   private handleGetPresentationDefinition(): Handler {
     return (c) => {
-      const pdFound = (pd: PresentationDefinition) => c.json(pd, 200);
-
-      const requestId = new RequestId(c.req.param('requestId'));
-      console.info(
-        `Handling GetPresentationDefinition for ${requestId.value} ...`
-      );
-      const result = this.getPresentationDefinition(requestId);
-      if (result.constructor === QueryResponse.NotFound) {
-        return c.text('', 404);
-      }
-      if (result.constructor === QueryResponse.InvalidState) {
-        return c.text('', 400);
-      }
-      if (result.constructor === QueryResponse.Found) {
-        return pdFound(
-          (result as QueryResponse.Found<PresentationDefinition>).value
-        );
-      }
+      return c.text('', 404);
+      // const { portsInput } = getDI(c);
+      // const pdFound = (pd: PresentationDefinition) => c.json(pd, 200);
+      // const requestId = new RequestId(c.req.param('requestId'));
+      // console.info(
+      //   `Handling GetPresentationDefinition for ${requestId.value} ...`
+      // );
+      // const result = portsInput.getPresentationDefinition(requestId);
+      // if (result.constructor === QueryResponse.NotFound) {
+      //   return c.text('', 404);
+      // }
+      // if (result.constructor === QueryResponse.InvalidState) {
+      //   return c.text('', 400);
+      // }
+      // if (result.constructor === QueryResponse.Found) {
+      //   return pdFound(
+      //     (result as QueryResponse.Found<PresentationDefinition>).value
+      //   );
+      // }
     };
   }
   /**
@@ -188,22 +172,21 @@ export class WalletApi {
    */
   private handleGetJarmJwks(): Handler {
     return (c) => {
-      const requestId = new RequestId(c.req.param('requestId'));
-      console.info(`Handling GetJarmJwks for ${requestId.value} ...`);
-
-      const queryResponse = this.getJarmJwks(requestId);
-
-      if (queryResponse.constructor === QueryResponse.NotFound) {
-        return c.text('', 404);
-      }
-      if (queryResponse.constructor === QueryResponse.InvalidState) {
-        return c.text('', 400);
-      }
-      if (queryResponse.constructor === QueryResponse.Found) {
-        return c.json(queryResponse, 200, {
-          'Content-Type': 'application/jwk-set+json; charset=UTF-8',
-        });
-      }
+      return c.text('', 404);
+      // const requestId = new RequestId(c.req.param('requestId'));
+      // console.info(`Handling GetJarmJwks for ${requestId.value} ...`);
+      // const queryResponse = this.getJarmJwks(requestId);
+      // if (queryResponse.constructor === QueryResponse.NotFound) {
+      //   return c.text('', 404);
+      // }
+      // if (queryResponse.constructor === QueryResponse.InvalidState) {
+      //   return c.text('', 400);
+      // }
+      // if (queryResponse.constructor === QueryResponse.Found) {
+      //   return c.json(queryResponse, 200, {
+      //     'Content-Type': 'application/jwk-set+json; charset=UTF-8',
+      //   });
+      // }
     };
   }
 }
@@ -248,26 +231,26 @@ export namespace WalletApi {
     return directPostJwt() || (await directPost());
   };
 
-  export const requestJwtByReference = (baseUrl: string) => {
-    return urlBuilder(baseUrl, REQUEST_JWT_PATH);
-  };
-  export const presentationDefinitionByReference = (baseUrl: string) => {
-    return urlBuilder(baseUrl, PRESENTATION_DEFINITION_PATH);
-  };
-  export const publicJwkSet = (baseUrl: string) => {
-    return `${baseUrl}${GET_PUBLIC_JWK_SET_PATH}`;
-  };
-  export const jarmJwksByReference = (baseUrl: string) => {
-    return urlBuilder(baseUrl, GET_PUBLIC_JWK_SET_PATH);
-  };
+  // export const requestJwtByReference = (baseUrl: string) => {
+  //   return urlBuilder(baseUrl, REQUEST_JWT_PATH);
+  // };
+  // export const presentationDefinitionByReference = (baseUrl: string) => {
+  //   return urlBuilder(baseUrl, PRESENTATION_DEFINITION_PATH);
+  // };
+  // export const publicJwkSet = (baseUrl: string) => {
+  //   return `${baseUrl}${GET_PUBLIC_JWK_SET_PATH}`;
+  // };
+  // export const jarmJwksByReference = (baseUrl: string) => {
+  //   return urlBuilder(baseUrl, GET_PUBLIC_JWK_SET_PATH);
+  // };
 
-  export const directPost = (baseUrl: string) => {
-    return `${baseUrl}${WALLET_RESPONSE_PATH}`;
-  };
+  // export const directPost = (baseUrl: string) => {
+  //   return `${baseUrl}${WALLET_RESPONSE_PATH}`;
+  // };
 
   export const urlBuilder = (baseUrl: string, pathTemplate: string) => {
     return new EmbedOption.ByReference(
-      new UrlBuilder.WithRequestIdTemplate(`${baseUrl}${pathTemplate}`)
+      new UrlBuilder.Fix(`${baseUrl}${pathTemplate}`)
     );
 
     // return new EmbedOption.ByReference(function (requestId: RequestId) {
