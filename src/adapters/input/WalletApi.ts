@@ -26,7 +26,6 @@ import {
 } from 'oid4vc-verifier-endpoint-core';
 import { PresentationExchange } from 'oid4vc-prex';
 import { getDI } from './getDI';
-import { HonoConfiguration } from '../../di/HonoConfiguration';
 import { Env } from '../../env';
 
 /**
@@ -38,24 +37,19 @@ export class WalletApi {
    */
   public route: Hono<Env>;
 
-  constructor() {
-    const configuration = new HonoConfiguration();
-
+  constructor(
+    requestJWTPath: string,
+    presentationDefinitionPath: string,
+    walletResponsePath: string,
+    getPublicJWKSetPath: string,
+    jarmJWKSetPath: string
+  ) {
     this.route = new Hono<Env>()
-      .get(
-        configuration.requestJWTPath(':requestId'),
-        this.handleGetRequestObject()
-      )
-      .get(
-        configuration.presentationDefinitionPath(':requestId'),
-        this.handleGetPresentationDefinition()
-      )
-      .post(configuration.walletResponsePath(), this.handlePostWalletResponse())
-      .get(configuration.getPublicJWKSetPath(), this.handleGetPublicJwkSet())
-      .get(
-        configuration.jarmJWKSetPath(':requestId'),
-        this.handleGetJarmJwks()
-      );
+      .get(requestJWTPath, this.handleGetRequestObject())
+      .get(presentationDefinitionPath, this.handleGetPresentationDefinition())
+      .post(walletResponsePath, this.handlePostWalletResponse())
+      .get(getPublicJWKSetPath, this.handleGetPublicJwkSet())
+      .get(jarmJWKSetPath, this.handleGetJarmJwks());
   }
 
   /**
