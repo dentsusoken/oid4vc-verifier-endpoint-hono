@@ -16,8 +16,6 @@
 import { Hono, Context, Handler } from 'hono';
 import { HonoConfiguration } from '../../di/HonoConfiguration';
 import {
-  PortsInputImpl,
-  PortsOutImpl,
   InitTransactionTO,
   TransactionId,
   ResponseCode,
@@ -25,26 +23,24 @@ import {
   QueryResponse,
 } from 'oid4vc-verifier-endpoint-core';
 import { getDI } from './getDI';
-
-const INIT_TRANSACTION_PATH = '/ui/presentations';
-const WALLET_RESPONSE_PATH = '/ui/presentations/:transactionId';
-// const EVENTS_RESPONSE_PATH = '/ui/presentations/:transactionId/events';
+import { Env } from '../../env';
 
 export class VerifierApi {
-  // public route;
+  /**
+   * The routes available to the frontend
+   */
+  public route: Hono<Env>;
 
   constructor() {
-    // private getPresentationEvents: GetPresentationEvents // private getWalletResponse: GetWalletResponse, // private initTransaction: InitTransaction,
-    // this.route = new Hono()
-    //   .post(INIT_TRANSACTION_PATH, this.handleInitTransation)
-    //   .get(WALLET_RESPONSE_PATH, this.handleGetWalletResponse)
-    //   .get(EVENTS_RESPONSE_PATH, this.handleGetPresentationEvents);
-  }
+    const configuration = new HonoConfiguration();
 
-  public route = new Hono()
-    .post(INIT_TRANSACTION_PATH, this.handleInitTransation())
-    .get(WALLET_RESPONSE_PATH, this.handleGetWalletResponse());
-  // .get(EVENTS_RESPONSE_PATH, this.handleGetPresentationEvents());
+    this.route = new Hono<Env>()
+      .post(configuration.initTransactionPath(), this.handleInitTransation())
+      .get(
+        configuration.getWalletResponsePath(':transactionId'),
+        this.handleGetWalletResponse()
+      );
+  }
 
   private handleInitTransation(): Handler {
     return async (c) => {
@@ -135,5 +131,4 @@ export class VerifierApi {
   // }
 }
 
-// TODO mapOf("error" to this)が実装できてない
 const asBadRequest = (c: Context, error?: Error) => c.json(error, 400);

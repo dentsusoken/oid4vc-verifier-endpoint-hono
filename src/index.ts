@@ -5,7 +5,7 @@ import { VerifierApi } from './adapters/input/VerifierApi';
 import { WalletApi } from './adapters/input/WalletApi';
 
 const verifierApi = new VerifierApi();
-const walletApi = new WalletApi({} as any, {} as any);
+const walletApi = new WalletApi();
 
 const app = new Hono<Env>()
   .use('*', (c, next) => cors({ origin: c.env.CORS_ORIGIN })(c, next))
