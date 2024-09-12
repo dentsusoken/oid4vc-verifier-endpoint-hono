@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { Hono, Context, Handler } from 'hono';
-import { HonoConfiguration } from '../../di/HonoConfiguration';
 import {
   InitTransactionTO,
   TransactionId,
@@ -31,15 +30,10 @@ export class VerifierApi {
    */
   public route: Hono<Env>;
 
-  constructor() {
-    const configuration = new HonoConfiguration();
-
+  constructor(initTransactionPath: string, getWalletResponsePath: string) {
     this.route = new Hono<Env>()
-      .post(configuration.initTransactionPath(), this.handleInitTransation())
-      .get(
-        configuration.getWalletResponsePath(':transactionId'),
-        this.handleGetWalletResponse()
-      );
+      .post(initTransactionPath, this.handleInitTransation())
+      .get(getWalletResponsePath, this.handleGetWalletResponse());
   }
 
   private handleInitTransation(): Handler {
