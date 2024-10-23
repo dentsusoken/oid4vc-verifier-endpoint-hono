@@ -204,12 +204,11 @@ export namespace WalletApi {
         errorDescription: error_description,
         idToken: id_token,
         vpToken: vp_token,
-        presentationSubmission:
-          (
-            await PresentationExchange.jsonParse.decodePresentationSubmission(
-              presentation_submission!
-            )
-          ).getOrNull() || undefined,
+        presentationSubmission: (
+          await PresentationExchange.jsonParse.decodePresentationSubmission(
+            presentation_submission!
+          )
+        ).value,
       };
       return new AuthorizationResponse.DirectPost(response);
     };
