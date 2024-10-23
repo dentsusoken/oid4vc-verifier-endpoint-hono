@@ -1,178 +1,103 @@
 import { describe, expect, it, vi } from 'vitest';
 import { VerifierApi } from './VerifierApi';
-import {
-  GetPresentationEvents,
-  GetWalletResponse,
-  InitTransaction,
-  JwtSecuredAuthorizationRequestTO,
-  PresentationEventsTO,
-  QueryResponse,
-  WalletResponseTO,
-} from '../../mock/endpoint-core';
+import { HonoConfiguration } from '../../di/HonoConfiguration';
+import { Hono } from 'hono';
 
-const mockInitTransaction: InitTransaction = {
-  invoke: vi.fn().mockRejectedValue({
-    clientId: 'client_id',
-    request: 'request',
-    requestUri: 'request_uri',
-    transactionId: 'transaction_id',
-  } as JwtSecuredAuthorizationRequestTO),
-};
-const mockGetWalletResponse: GetWalletResponse = {
-  invoke: vi.fn().mockReturnValue({
-    events: 'evemts',
-    last_updated: 'last_updated',
-    nonce: 'nonce',
-    transaction_id: 'transaction_id',
-  } as WalletResponseTO),
-};
-const mockGetPresentationEvents: GetPresentationEvents = {
-  invoke: vi.fn().mockReturnValue(
-    new QueryResponse.Found({
-      transaction_id: 'transaction_id',
-      last_updated: 'last_updated',
-      events: 'events',
-      nonce: 'nonce',
-    }) as QueryResponse<PresentationEventsTO>
+const now = new Date().toISOString();
+
+const conf = new HonoConfiguration();
+const mockKVNamespace = {
+  get: vi.fn().mockResolvedValue(
+    JSON.stringify({
+      __type: 'Submitted',
+      id: 'abc123',
+      initiated_at: now,
+      type: {
+        __type: 'VpTokenRequest',
+        presentation_definition: {
+          id: 'id',
+        },
+      },
+      request_id: 'def456',
+      request_object_retrieved_at: now,
+      submitted_at: now,
+      wallet_response: {
+        __type: 'IdToken',
+        id_token: 'aa',
+      },
+      nonce: 'ghi789',
+      response_code: 'efg',
+    })
   ),
+  put: vi.fn(),
+  delete: vi.fn(),
+};
+
+const mockEnv = {
+  JAR_SIGNING_PRIVATE_JWK: process.env.JAR_SIGNING_PRIVATE_JWK,
+  CLIENT_ID: process.env.CLIENT_ID,
+  CLIENT_ID_SCHEME: process.env.CLIENT_ID_SCHEME,
+  PUBLIC_URL: process.env.PUBLIC_URL,
+  CORS_ORIGIN: process.env.CORS_ORIGIN,
+  PRESENTATION_KV: mockKVNamespace,
 };
 
 describe('VerifierApi', () => {
-  const verifierApi = new VerifierApi(
-    mockInitTransaction,
-    mockGetWalletResponse,
-    mockGetPresentationEvents
-  ).route;
+  const api = new VerifierApi(
+    conf.initTransactionPath(),
+    conf.getWalletResponsePath(':transactionId')
+  );
+  const app = new Hono().route('/', api.route);
+
   describe('handleInitTransation', () => {
     it('should return 200', async () => {
-      const response = await verifierApi.request('/ui/presentations', {
-        method: 'POST',
-        body: JSON.stringify({
-          nonce: 'nonce',
-        }),
-      });
-      expect(response.status).toBe(200);
-    });
-    it('should return 400 when parameter is invalid', async () => {
-      const response = await verifierApi.request('/ui/presentations', {
-        method: 'POST',
-      });
-      expect(response.status).toBe(400);
-    });
-    it('should return 400 when InitTransaction port return nullable value', async () => {
-      const verifierApi = new VerifierApi(
+      const res = await app.request(
+        conf.initTransactionPath(),
         {
-          invoke: vi.fn(),
+          method: 'POST',
+          body: JSON.stringify({
+            type: 'vp_token',
+            presentation_definition: {
+              id: '5db00636-73fb-425a-b5a3-482d26d0d602',
+              input_descriptors: [
+                {
+                  id: 'org.iso.18013.5.1.mDL',
+                  format: { mso_mdoc: { alg: ['ES256', 'ES384', 'ES512'] } },
+                  constraints: {
+                    fields: [
+                      {
+                        path: ["$['''org.iso.18013.5.1''']['''given_name''']"],
+                        intent_to_retain: false,
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+            nonce: '3b75b9b1-2463-4d4a-b921-adc21642c43c',
+          }),
         },
-        mockGetWalletResponse,
-        mockGetPresentationEvents
-      ).route;
-      const response = await verifierApi.request('/ui/presentations', {
-        method: 'POST',
-        body: JSON.stringify({
-          nonce: 'nonce',
-        }),
-      });
-      expect(response.status).toBe(400);
+        mockEnv
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockEnv.PRESENTATION_KV.put).toHaveBeenCalled();
     });
   });
   describe('handleGetWalletResponse', () => {
     it('should return 200', async () => {
-      const verifierApi = new VerifierApi(
-        mockInitTransaction,
+      const res = await app.request(
+        `${conf.getWalletResponsePath(
+          '3b75b9b1-2463-4d4a-b921-adc21642c43c'
+        )}?response_code=efg`,
         {
-          invoke: vi
-            .fn()
-            .mockReturnValue(
-              new QueryResponse.Found(
-                'response'
-              ) as QueryResponse<WalletResponseTO>
-            ),
+          method: 'GET',
         },
-        mockGetPresentationEvents
-      ).route;
-      const response = await verifierApi.request(
-        '/ui/presentations/transaction_id',
-        {
-          method: 'GET',
-        }
+        mockEnv
       );
-      expect(response.status).toBe(200);
-    });
-    it('should return 400 when getWalletResponse port return InvalidState', async () => {
-      const verifierApi = new VerifierApi(
-        mockInitTransaction,
-        {
-          invoke: vi.fn().mockReturnValue(new QueryResponse.InvalidState()),
-        },
-        mockGetPresentationEvents
-      ).route;
-      const response = await verifierApi.request(
-        '/ui/presentations/transaction_id',
-        {
-          method: 'GET',
-        }
-      );
-      expect(response.status).toBe(400);
-    });
-    it('should return 404 when getWalletResponse port return InvalidState', async () => {
-      const verifierApi = new VerifierApi(
-        mockInitTransaction,
-        {
-          invoke: vi.fn().mockReturnValue(new QueryResponse.NotFound()),
-        },
-        mockGetPresentationEvents
-      ).route;
-      const response = await verifierApi.request(
-        '/ui/presentations/transaction_id',
-        {
-          method: 'GET',
-        }
-      );
-      expect(response.status).toBe(404);
-    });
-  });
-  describe('handleGetPresentationEvents', () => {
-    it('should return 200', async () => {
-      const response = await verifierApi.request(
-        '/ui/presentations/transaction_id/events',
-        {
-          method: 'GET',
-        }
-      );
-      expect(response.status).toBe(200);
-    });
-    it('should return 400 when getPresentationEvents port return InvalidState', async () => {
-      const verifierApi = new VerifierApi(
-        mockInitTransaction,
-        mockGetWalletResponse,
-        {
-          invoke: vi.fn().mockReturnValue(new QueryResponse.InvalidState()),
-        }
-      ).route;
-      const response = await verifierApi.request(
-        '/ui/presentations/transaction_id/events',
-        {
-          method: 'GET',
-        }
-      );
-      expect(response.status).toBe(400);
-    });
-    it('should return 404 when getPresentationEvents port return NotFound', async () => {
-      const verifierApi = new VerifierApi(
-        mockInitTransaction,
-        mockGetWalletResponse,
-        {
-          invoke: vi.fn().mockReturnValue(new QueryResponse.NotFound()),
-        }
-      ).route;
-      const response = await verifierApi.request(
-        '/ui/presentations/transaction_id/events',
-        {
-          method: 'GET',
-        }
-      );
-      expect(response.status).toBe(404);
+
+      expect(res.status).toBe(200);
+      expect(mockEnv.PRESENTATION_KV.get).toHaveBeenCalled();
     });
   });
 });

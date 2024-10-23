@@ -17,8 +17,6 @@ describe('StaticContent', () => {
   it('should invoke next handler when Accept header dose not include "text/html"', async () => {
     const staticContent = new StaticContent();
     const route = staticContent.route.get('/get', (c) => {
-      console.log('here');
-
       return c.html('<h1>This is mock</h1>');
     });
     const result = await route.request('/get', {

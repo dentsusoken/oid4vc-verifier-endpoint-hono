@@ -45,12 +45,12 @@ export class VerifierApi {
       console.info(`Handling InitTransaction nonce=${input.nonce} ... `);
 
       const result = await initTransaction(input);
-      if (result.isFailure) {
-        const error = result.exceptionOrUndefined();
+      if (result.isFailure()) {
+        const error = result.error;
         console.warn('While handling InitTransaction', error);
-        return asBadRequest(c, error);
+        return asBadRequest(c, error.message);
       }
-      const it = result.getOrUndefined()!;
+      const it = result.value!;
       console.info(`Initiated transaction tx ${it.transactionId}`);
       return c.json(it.serialize());
     };
@@ -82,15 +82,15 @@ export class VerifierApi {
 
       const result = await getWalletResponse(transactionId, responseCode);
       if (result.constructor === QueryResponse.NotFound) {
-        return c.text('', 404);
+        return c.text(result.message, 404);
       }
       if (result.constructor === QueryResponse.InvalidState) {
-        return asBadRequest(c);
+        return asBadRequest(c, result.message);
       }
       if (result.constructor === QueryResponse.Found) {
         return found(result.value);
       }
-      return c.text('', 500);
+      return c.text('Something went wrong...', 500);
     };
   }
 
@@ -125,4 +125,5 @@ export class VerifierApi {
   // }
 }
 
-const asBadRequest = (c: Context, error?: Error) => c.json(error, 400);
+const asBadRequest = (c: Context, error?: string) =>
+  c.text(error ?? 'Something went wrong...', 400);
