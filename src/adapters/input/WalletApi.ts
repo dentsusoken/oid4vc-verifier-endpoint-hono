@@ -27,6 +27,7 @@ import {
 import { PresentationExchange } from 'oid4vc-prex';
 import { getDI } from './getDI';
 import { Env } from '../../env';
+import { cors } from 'hono/cors';
 
 /**
  * The WEB API available to the wallet
@@ -45,6 +46,7 @@ export class WalletApi {
     jarmJWKSetPath: string
   ) {
     this.route = new Hono<Env>()
+      .use('*', (c, next) => cors({ origin: '*' })(c, next))
       .get(requestJWTPath, this.handleGetRequestObject())
       .get(presentationDefinitionPath, this.handleGetPresentationDefinition())
       .post(walletResponsePath, this.handlePostWalletResponse())
@@ -135,7 +137,7 @@ export class WalletApi {
             return c.json({ redirect_uri: response.redirectUri }, 200);
           }
         } catch (e) {
-          console.error('$error while handling post of wallet response ');
+          console.error('While handling post of wallet response ', e);
           return c.text('', 400);
         }
       } catch (e) {

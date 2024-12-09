@@ -9,7 +9,8 @@ const configuration = new HonoConfiguration();
 
 const verifierApi = new VerifierApi(
   configuration.initTransactionPath(),
-  configuration.getWalletResponsePath(':transactionId')
+  configuration.getWalletResponsePath(':transactionId'),
+  configuration.frontendCorsOrigin()
 );
 const walletApi = new WalletApi(
   configuration.requestJWTPath(':requestId'),
@@ -20,7 +21,6 @@ const walletApi = new WalletApi(
 );
 
 const app = new Hono<Env>()
-  .use('*', (c, next) => cors({ origin: c.env.CORS_ORIGIN })(c, next))
   .route('/', verifierApi.route)
   .route('/', walletApi.route);
 

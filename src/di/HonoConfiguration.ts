@@ -34,4 +34,7 @@ export class HonoConfiguration extends AbstractConfiguration {
   presentationDefinitionOptionName = (): EmbedOptionName => 'by_value';
 
   maxAge = (): Duration => DurationLuxon.Factory.ofMinutes(5);
+
+  frontendCorsOrigin = (): string =>
+    'https://oid4vc-verifier-frontend-hono.g-trustedweb.workers.dev';
 }

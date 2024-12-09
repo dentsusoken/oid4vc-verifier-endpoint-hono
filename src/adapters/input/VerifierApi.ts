@@ -23,6 +23,7 @@ import {
 } from 'oid4vc-verifier-endpoint-core';
 import { getDI } from './getDI';
 import { Env } from '../../env';
+import { cors } from 'hono/cors';
 
 export class VerifierApi {
   /**
@@ -30,8 +31,13 @@ export class VerifierApi {
    */
   public route: Hono<Env>;
 
-  constructor(initTransactionPath: string, getWalletResponsePath: string) {
+  constructor(
+    initTransactionPath: string,
+    getWalletResponsePath: string,
+    corsOrigin: string
+  ) {
     this.route = new Hono<Env>()
+      .use('*', (c, next) => cors({ origin: corsOrigin })(c, next))
       .post(initTransactionPath, this.handleInitTransation())
       .get(getWalletResponsePath, this.handleGetWalletResponse());
   }
