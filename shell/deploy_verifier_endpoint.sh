@@ -28,7 +28,7 @@ echo "続行するにはEnterキーを押してください。"
 read -p ""
 
 # 各モジュールのディレクトリを設定
-BUILD_DIR=endpoint_modules
+BUILD_DIR=build
 CORE_DIR=$BUILD_DIR/oid4vc-core
 PREX_DIR=$BUILD_DIR/oid4vc-prex
 ENDPOINT_CORE_DIR=$BUILD_DIR/oid4vc-verifier-endpoint-core
