@@ -35,3 +35,4 @@ lerna-debug.log*
 # AWS Lambda
 .aws-sam/
 build/
+volume/

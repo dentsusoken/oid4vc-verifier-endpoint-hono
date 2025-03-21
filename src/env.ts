@@ -8,5 +8,7 @@ export type Env = {
     PUBLIC_URL: string;
     CORS_ORIGIN: string;
     PRESENTATION_KV: KVNamespace;
+    DYNAMODB_TABLE: string;
+    DEPLOY_ENV: string;
   };
 };

@@ -4,6 +4,7 @@ import { Env } from './env';
 import { LambdaVerifierApi } from './adapters/input/LambdaVerifierApi';
 import { LambdaWalletApi } from './adapters/input/LambdaWalletApi';
 import { HonoConfiguration } from './di/HonoConfiguration';
+import { setupLambdaMiddleware } from './middleware/setup';
 
 const configuration = new HonoConfiguration();
 
@@ -23,6 +24,8 @@ const walletApi = new LambdaWalletApi(
 const app = new Hono<Env>()
   .route('/', verifierApi.route)
   .route('/', walletApi.route);
+
+app.use(setupLambdaMiddleware);
 
 // export default app;
 export const handler = handle(app);

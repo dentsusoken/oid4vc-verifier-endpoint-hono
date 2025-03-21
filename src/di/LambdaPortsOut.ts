@@ -55,12 +55,12 @@ export class LambdaPortsOut extends PortsOutImpl {
   constructor(configuration: Configuration, c: Context<Env>) {
     super(configuration);
     const client = createDynamoDBClient({
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
-      },
+      // credentials: {
+      //   accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
+      //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+      // },
     });
-    const dynamo = new DynamoDB(client, process.env.TABLE_NAME ?? '');
+    const dynamo = new DynamoDB(client, process.env.DYNAMODB_TABLE ?? '');
     this.#presentationDynamoStore = new PresentationDynamoStore(dynamo);
   }
 
