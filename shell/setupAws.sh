@@ -8,44 +8,27 @@ ls -la *.zip
 echo "Checking if DynamoDB table exists: $DYNAMODB_TABLE"
 TABLE_EXISTS=$(aws dynamodb describe-table --table-name "$DYNAMODB_TABLE" --region $AWS_DEFAULT_REGION 2>/dev/null)
 
-# DynamoDBテーブルの作成または、更新
-# if [ -z "$TABLE_EXISTS" ];then
-# echo "Creating DynamoDB table: $DYNAMODB_TABLE"
-# aws dynamodb create-table \
-#     --table-name "$DYNAMODB_TABLE" \
-#     --attribute-definitions \
-#         AttributeName=key,AttributeType=S \
-#     --key-schema \
-#         AttributeName=key,KeyType=HASH \
-#     --provisioned-throughput \
-#         ReadCapacityUnits=5,WriteCapacityUnits=5 \
-#     --region $AWS_DEFAULT_REGION
+# DynamoDBテーブルの作成
+if [ -z "$TABLE_EXISTS" ];then
+echo "Creating DynamoDB table: $DYNAMODB_TABLE"
+aws dynamodb create-table \
+    --table-name "$DYNAMODB_TABLE" \
+    --attribute-definitions \
+        AttributeName=key,AttributeType=S \
+    --key-schema \
+        AttributeName=key,KeyType=HASH \
+    --provisioned-throughput \
+        ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --region $AWS_DEFAULT_REGION
 
-#     if [ $? -ne 0 ];then
-#         echo "Failed to create DynamoDB table"
-#         exit 1
-#     fi
-#     echo "DynamoDB table created successfully"
-# else
-#     echo "Updating DynamoDB table throughput"
-#     aws dynamodb update-table \
-#         --table-name "$DYNAMODB_TABLE" \
-#         --provisioned-throughput \
-#             ReadCapacityUnits=10,WriteCapacityUnits=10 \
-#         --region $AWS_DEFAULT_REGION
-
-#     if [ $? -ne 0 ]; then
-#         echo "Failed to update DynamoDB table"
-#         exit 1
-#     fi
-
-#     echo "DynamoDB table updated successfully"
-# fi
-
-# IAMロールの取得
-# ROLE_NAME="tw-lambda"
-# ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text)
-# ROLE_ARN="arn:aws:iam::577638367706:role/tw-lambda"
+    if [ $? -ne 0 ];then
+        echo "Failed to create DynamoDB table"
+        exit 1
+    fi
+    echo "DynamoDB table created successfully"
+else
+    echo "DynamoDB table already created"
+fi
 
 # Lambda関数の作成または更新
 echo "Checking if Lambda function exists: verifier-endpoint"
