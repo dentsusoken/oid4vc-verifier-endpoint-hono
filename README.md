@@ -1,3 +1,104 @@
-# 開発者向けのリンク集
+# oid4vc-verifier-endpoint-hono
 
-[Gitの利用方法とCIのセットアップガイド](https://esq365.sharepoint.com/sites/isid-scm/SitePages/%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E9%96%8B%E7%99%BA%E3%82%92%E5%88%9D%E3%82%81%E3%82%8B%E5%89%8D%E3%81%AB.aspx)
+## How to build
+
+### Create .dev.vars
+
+JAR_SIGNING_PRIVATE_JWK="YOUR_JAR_SIGNING_PRIVATE_JWK"
+CLIENT_ID="YOUR_CLIENT_ID"
+CLIENT_ID_SCHEME="x509_san_dns"
+PUBLIC_URL="http://localhost:8787"
+CORS_ORIGIN="*"
+
+### Install dependencies
+
+npm install
+
+### Run locally
+
+npm run dev
+
+### Deploy
+
+npm run deploy
+
+## How to emulate AWS Lambda (localstack)
+
+1. Clone or copy the following repositories into the `./build` directory:
+   - [`oid4vc-core`](https://github.com/dentsusoken/oid4vc-core.git)
+   - [`oid4vc-prex`](https://github.com/dentsusoken/oid4vc-prex.git)
+   - [`oid4vc-verifier-endpoint-core`](https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git)
+
+   ```bash
+   # If cloning new repositories
+   cd build
+   git clone https://github.com/dentsusoken/oid4vc-core.git
+   git clone https://github.com/dentsusoken/oid4vc-prex.git
+   git clone https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git
+   
+   # Or if copying existing local development repositories
+   cp -r /path/to/local/oid4vc-core ./build/
+   cp -r /path/to/local/oid4vc-prex ./build/
+   cp -r /path/to/local/oid4vc-verifier-endpoint-core ./build/
+   ```
+
+2. Create .env
+    ```bash
+    JAR_SIGNING_PRIVATE_JWK=YOUR_JAR_SIGNING_PRIVATE_JWK
+    CLIENT_ID=YOUR_CLIENT_ID
+    CLIENT_ID_SCHEME=x509_san_dns
+    PUBLIC_URL=http://localhost:8787
+    CORS_ORIGIN=*
+    ```
+
+3. Rebuilding the Image and Starting the Container:
+   ```bash
+   docker-compose up --build
+   ```
+## How to deploy AWS Lambda
+
+1. Clone or copy the following repositories into the `./build` directory:
+   - [`oid4vc-core`](https://github.com/dentsusoken/oid4vc-core.git)
+   - [`oid4vc-prex`](https://github.com/dentsusoken/oid4vc-prex.git)
+   - [`oid4vc-verifier-endpoint-core`](https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git)
+
+   ```bash
+   # If cloning new repositories
+   cd build
+   git clone https://github.com/dentsusoken/oid4vc-core.git
+   git clone https://github.com/dentsusoken/oid4vc-prex.git
+   git clone https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git
+   
+   # Or if copying existing local development repositories
+   cp -r /path/to/local/oid4vc-core ./build/
+   cp -r /path/to/local/oid4vc-prex ./build/
+   cp -r /path/to/local/oid4vc-verifier-endpoint-core ./build/
+   ```
+
+2. IAM Role Configuration:
+
+   **Add to the IAM role you are using**
+
+   * AWSLambdaBasicExecutionRole
+   * AWSLambdaDynamoDBExecutionRole
+   * dynamodb:GetItem
+   * SecretsManagerReadWrite
+
+3. Set Environment Variables for SecretsManager:
+   ```bash
+   JAR_SIGNING_PRIVATE_JWK=YOUR_JAR_SIGNING_PRIVATE_JWK
+   CLIENT_ID=YOUR_CLIENT_ID
+   CLIENT_ID_SCHEME=x509_san_dns
+   PUBLIC_URL=http://localhost:8787
+   CORS_ORIGIN=*
+   ```
+
+4. Build:
+   ```bash
+   docker build -t verifier-endpoint:latest .
+   ```
+
+5. Run:
+   ```bash
+   docker run --env-file ./.env verifier-endpoint:latest
+   ```

@@ -8,24 +8,24 @@ import {
   ClientIdSchemeName,
 } from 'oid4vc-verifier-endpoint-core';
 import { Env } from '../env';
+import { env } from 'hono/adapter';
 
 export class HonoConfiguration extends AbstractConfiguration {
-  #c?: Context<Env>;
+  #env?: Env['Bindings'];
 
-  constructor(c?: Context<Env>) {
+  constructor(c?: Context) {
     super();
-    this.#c = c;
+    this.#env = c ? env<Env['Bindings']>(c) : undefined;
   }
 
-  jarSigningPrivateJwk = (): string =>
-    this.#c?.env.JAR_SIGNING_PRIVATE_JWK || '';
+  jarSigningPrivateJwk = (): string => this.#env?.JAR_SIGNING_PRIVATE_JWK || '';
 
-  clientId = (): string => this.#c?.env.CLIENT_ID || '';
+  clientId = (): string => this.#env?.CLIENT_ID || '';
 
   clientIdSchemeName = (): ClientIdSchemeName =>
-    this.#c?.env.CLIENT_ID_SCHEME || 'x509_san_dns';
+    this.#env?.CLIENT_ID_SCHEME || 'x509_san_dns';
 
-  publicUrl = (): string => this.#c?.env.PUBLIC_URL || '';
+  publicUrl = (): string => this.#env?.PUBLIC_URL || '';
 
   jarOptionName = (): EmbedOptionName => 'by_reference';
 
