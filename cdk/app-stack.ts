@@ -22,7 +22,7 @@ export class AppStack extends cdk.Stack {
       handler: "handler",
       runtime: lambda.Runtime.NODEJS_20_X,
       environment: {
-        DYNAMODB_TABLE: table.name,
+        DYNAMODB_TABLE_VERIFIER_ENDPOINT: table.name,
       },
     });
 

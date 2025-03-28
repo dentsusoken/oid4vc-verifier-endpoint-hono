@@ -38,10 +38,10 @@ export const setupLambdaMiddleware = createMiddleware(async (c, next) => {
         JAR_SIGNING_PRIVATE_JWK: process.env.JAR_SIGNING_PRIVATE_JWK,
         CLIENT_ID: process.env.CLIENT_ID,
         CLIENT_ID_SCHEME: process.env.CLIENT_ID_SCHEME,
-        PUBLIC_URL: process.env.PUBLIC_URL_VERIFIER_ENDPOINT,
+        PUBLIC_URL_VERIFIER_ENDPOINT: process.env.PUBLIC_URL_VERIFIER_ENDPOINT,
         CORS_ORIGIN: process.env.CORS_ORIGIN,
         PRESENTATION_KV: process.env.PRESENTATION_KV || '',
-        DYNAMODB_TABLE: process.env.DYNAMODB_TABLE_VERIFIER_ENDPOINT || '',
+        DYNAMODB_TABLE_VERIFIER_ENDPOINT: process.env.DYNAMODB_TABLE_VERIFIER_ENDPOINT || '',
     };
     return next();
 });
