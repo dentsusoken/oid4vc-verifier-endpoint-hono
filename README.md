@@ -4,11 +4,13 @@
 
 ### Create .dev.vars
 
+```bash
 JAR_SIGNING_PRIVATE_JWK="YOUR_JAR_SIGNING_PRIVATE_JWK"
 CLIENT_ID="YOUR_CLIENT_ID"
 CLIENT_ID_SCHEME="x509_san_dns"
-PUBLIC_URL="http://localhost:8787"
+PUBLIC_URL_VERIFIER_ENDPOINT="http://localhost:8080"
 CORS_ORIGIN="*"
+```
 
 ### Install dependencies
 
@@ -43,13 +45,14 @@ npm run deploy
    ```
 
 2. Create .env
-    ```bash
-    JAR_SIGNING_PRIVATE_JWK=YOUR_JAR_SIGNING_PRIVATE_JWK
-    CLIENT_ID=YOUR_CLIENT_ID
-    CLIENT_ID_SCHEME=x509_san_dns
-    PUBLIC_URL=http://localhost:8787
-    CORS_ORIGIN=*
-    ```
+   ```bash
+   JAR_SIGNING_PRIVATE_JWK=YOUR_JAR_SIGNING_PRIVATE_JWK
+   CLIENT_ID=YOUR_CLIENT_ID
+   CLIENT_ID_SCHEME=x509_san_dns
+   PUBLIC_URL_VERIFIER_ENDPOINT=http://localhost:8080
+   CORS_ORIGIN=*
+   DEPLOY_ENV=local
+   ```
 
 3. Rebuilding the Image and Starting the Container:
    ```bash
@@ -89,8 +92,18 @@ npm run deploy
    JAR_SIGNING_PRIVATE_JWK=YOUR_JAR_SIGNING_PRIVATE_JWK
    CLIENT_ID=YOUR_CLIENT_ID
    CLIENT_ID_SCHEME=x509_san_dns
-   PUBLIC_URL=http://localhost:8787
+   PUBLIC_URL_VERIFIER_ENDPOINT=http://localhost:8080
    CORS_ORIGIN=*
+   DYNAMODB_TABLE_VERIFIER_ENDPOINT=PRESENTATION_KV
+   ```
+
+4. Create .env
+   ```bash
+   DYNAMODB_TABLE_VERIFIER_ENDPOINT=PRESENTATION_KV
+   AWS_DEFAULT_REGION=ap-northeast-1
+   LAMBDA_ROLE_NAME=arn:aws:iam::xxx:role/role-name
+   AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
+   AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
    ```
 
 4. Build:

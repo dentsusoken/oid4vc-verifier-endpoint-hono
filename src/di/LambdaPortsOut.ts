@@ -60,7 +60,7 @@ export class LambdaPortsOut extends PortsOutImpl {
       //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
       // },
     });
-    const dynamo = new DynamoDB(client, process.env.DYNAMODB_TABLE ?? '');
+    const dynamo = new DynamoDB(client, process.env.DYNAMODB_TABLE_VERIFIER_ENDPOINT ?? '');
     this.#presentationDynamoStore = new PresentationDynamoStore(dynamo);
   }
 

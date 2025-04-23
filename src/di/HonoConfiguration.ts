@@ -25,7 +25,7 @@ export class HonoConfiguration extends AbstractConfiguration {
   clientIdSchemeName = (): ClientIdSchemeName =>
     this.#env?.CLIENT_ID_SCHEME || 'x509_san_dns';
 
-  publicUrl = (): string => this.#env?.PUBLIC_URL || '';
+  publicUrl = (): string => this.#env?.PUBLIC_URL_VERIFIER_ENDPOINT || '';
 
   jarOptionName = (): EmbedOptionName => 'by_reference';
 

@@ -47,7 +47,7 @@ export class LambdaVerifierApi {
       const { portsInput } = getLambdaDI(c);
       const initTransaction = portsInput.initTransaction();
 
-      const input = InitTransactionTO.deserialize(await c.req.json());
+      const input = InitTransactionTO.fromJSON(await c.req.json());
       console.info(`Handling InitTransaction nonce=${input.nonce} ... `);
 
       const result = await initTransaction(input);
@@ -58,7 +58,7 @@ export class LambdaVerifierApi {
       }
       const it = result.value!;
       console.info(`Initiated transaction tx ${it.transactionId}`);
-      return c.json(it.serialize());
+      return c.json(it.toJSON());
     };
   }
 
@@ -69,7 +69,7 @@ export class LambdaVerifierApi {
   private handleGetWalletResponse(): Handler {
     return async (c) => {
       const found = (walletResponse: WalletResponseTO) =>
-        c.json(walletResponse.serialize(), 200);
+        c.json(walletResponse.toJSON(), 200);
 
       const { portsInput } = getLambdaDI(c);
       const getWalletResponse = portsInput.getWalletResponse();

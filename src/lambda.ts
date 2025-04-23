@@ -22,10 +22,9 @@ const walletApi = new LambdaWalletApi(
 );
 
 const app = new Hono<Env>()
+  .use(setupLambdaMiddleware)
   .route('/', verifierApi.route)
   .route('/', walletApi.route);
-
-app.use(setupLambdaMiddleware);
 
 // export default app;
 export const handler = handle(app);

@@ -5,14 +5,14 @@ echo "Current directory: $(pwd)"
 echo "Listing zip files:"
 ls -la *.zip
 
-echo "Checking if DynamoDB table exists: $DYNAMODB_TABLE"
-TABLE_EXISTS=$(aws dynamodb describe-table --table-name "$DYNAMODB_TABLE" --region $AWS_DEFAULT_REGION 2>/dev/null)
+echo "Checking if DynamoDB table exists: $DYNAMODB_TABLE_VERIFIER_ENDPOINT"
+TABLE_EXISTS=$(aws dynamodb describe-table --table-name "$DYNAMODB_TABLE_VERIFIER_ENDPOINT" --region $AWS_DEFAULT_REGION 2>/dev/null)
 
 # DynamoDBテーブルの作成
 if [ -z "$TABLE_EXISTS" ];then
-echo "Creating DynamoDB table: $DYNAMODB_TABLE"
+echo "Creating DynamoDB table: $DYNAMODB_TABLE_VERIFIER_ENDPOINT"
 aws dynamodb create-table \
-    --table-name "$DYNAMODB_TABLE" \
+    --table-name "$DYNAMODB_TABLE_VERIFIER_ENDPOINT" \
     --attribute-definitions \
         AttributeName=key,AttributeType=S \
     --key-schema \
@@ -88,8 +88,9 @@ if [ -z "$API_ID" ];then
     echo "Created API Gateway with ID: $API_ID"
 else
     echo "API Gateway already exists: verifier-endpoint"
-    aws apigateway update-rest-api \
+    aws apigateway update-stage \
         --rest-api-id $API_ID \
+        --stage-name dev \
         --patch-operations op=replace,path=/description,value="" \
         --output text \
         --region $AWS_DEFAULT_REGION
@@ -193,6 +194,7 @@ aws apigateway put-integration \
 # APIのデプロイ
 aws apigateway create-deployment \
     --rest-api-id "$API_ID" \
+    --stage-name dev \
     --region $AWS_DEFAULT_REGION
 
-echo "Setup completed. API Gateway endpoint: https://oid4vc-verifier-endpoint-hono.g-trustedweb.workers.dev/ui/presentations/" 
+echo "Setup completed. API Gateway endpoint: https://$API_ID.execute-api.$AWS_DEFAULT_REGION.amazonaws.com/dev/" 

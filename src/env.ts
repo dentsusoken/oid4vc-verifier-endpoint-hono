@@ -5,10 +5,10 @@ export type Env = {
     JAR_SIGNING_PRIVATE_JWK: string;
     CLIENT_ID: string;
     CLIENT_ID_SCHEME: ClientIdSchemeName;
-    PUBLIC_URL: string;
+    PUBLIC_URL_VERIFIER_ENDPOINT: string;
     CORS_ORIGIN: string;
     PRESENTATION_KV: KVNamespace;
-    DYNAMODB_TABLE: string;
+    DYNAMODB_TABLE_VERIFIER_ENDPOINT: string;
     DEPLOY_ENV: string;
   };
 };
