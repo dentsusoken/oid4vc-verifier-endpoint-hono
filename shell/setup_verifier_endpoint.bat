@@ -18,11 +18,6 @@ if exist "%BUILD_DIR%" (
     exit /b 0
 )
 
-echo Verifier Endpointのデプロイを開始します。
-echo Cloudflareにログインしていない場合、処理の途中でログインを求められます。
-echo 続行するにはEnterキーを押してください。
-pause > nul
-
 :: 各モジュールのディレクトリを設定
 set "CURRENT_DIR=%CD%"
 set "BUILD_DIR=%CURRENT_DIR%\build"
@@ -115,17 +110,8 @@ call npm install || (
 call npm link oid4vc-core oid4vc-prex oid4vc-verifier-endpoint-core || (
     call :handle_error "依存モジュールのリンクに失敗"
 )
-call npm i -g wrangler || (
-    call :handle_error "wranglerのインストールに失敗"
-)
-call npx wrangler login || (
-    call :handle_error "Cloudflareへのログインに失敗"
-)
-call npm run deploy || (
-    call :handle_error "デプロイに失敗"
-)
 
-echo Verifier Endpointのデプロイが完了しました。
+echo Verifier Endpointのセットアップが完了しました。
 
 :: 正常終了時のクリーンアップ
 call :cleanup
