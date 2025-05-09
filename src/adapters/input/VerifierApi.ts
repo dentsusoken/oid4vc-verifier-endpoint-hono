@@ -34,10 +34,18 @@ export class VerifierApi {
   constructor(
     initTransactionPath: string,
     getWalletResponsePath: string,
-    corsOrigin: string
+    _: string
   ) {
     this.route = new Hono<Env>()
-      .use('*', (c, next) => cors({ origin: corsOrigin })(c, next))
+      .use('*', (c, next) => {
+        if (!c.env.CORS_ORIGIN) {
+          return cors({ origin: '*' })(c, next);
+        }
+        const origin = c.env.CORS_ORIGIN.includes('[')
+          ? JSON.parse(c.env.CORS_ORIGIN)
+          : c.env.CORS_ORIGIN;
+        return cors({ origin })(c, next);
+      })
       .post(initTransactionPath, this.handleInitTransation())
       .get(getWalletResponsePath, this.handleGetWalletResponse());
   }
