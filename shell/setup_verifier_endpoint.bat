@@ -1,119 +1,116 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: ï¿½Gï¿½ï¿½ï¿½[ï¿½nï¿½ï¿½ï¿½hï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½Öï¿½
+:: ƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒOŠÖ”
 :handle_error
 if errorlevel 1 (
-    echo ï¿½Gï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½: %~1
+    echo ƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½: %~1
     exit /b 1
 )
 
-:: ï¿½eï¿½ï¿½ï¿½Wï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ìƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½ï¿½Ý’ï¿½
+:: Šeƒ‚ƒWƒ…[ƒ‹‚ÌƒfƒBƒŒƒNƒgƒŠ‚ðÝ’è
 set "CURRENT_DIR=%CD%"
 set "BUILD_DIR=%CURRENT_DIR%\build"
 set "CORE_DIR=%BUILD_DIR%\oid4vc-core"
 set "PREX_DIR=%BUILD_DIR%\oid4vc-prex"
 set "ENDPOINT_CORE_DIR=%BUILD_DIR%\oid4vc-verifier-endpoint-core"
 
-:: ï¿½Nï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Aï¿½bï¿½vï¿½Öï¿½
+:: ƒNƒŠ[ƒ“ƒAƒbƒvŠÖ”
 :cleanup
-echo ï¿½Nï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Aï¿½bï¿½vï¿½ï¿½ï¿½ï¿½ï¿½sï¿½ï¿½ï¿½Ü‚ï¿½...
+echo ƒNƒŠ[ƒ“ƒAƒbƒv‚ðŽÀs‚µ‚Ü‚·...
 if exist "%BUILD_DIR%" (
-    rmdir /s /q "%BUILD_DIR%" || echo ï¿½xï¿½ï¿½: buildï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ìíœï¿½ÉŽï¿½ï¿½sï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½
+    rmdir /s /q "%BUILD_DIR%" || echo Œx: buildƒfƒBƒŒƒNƒgƒŠ‚Ìíœ‚ÉŽ¸”s‚µ‚Ü‚µ‚½
 )
  if errorlevel 1 (
     exit /b 0
 )
 
+echo Verifier Endpoint‚ÌƒZƒbƒgƒAƒbƒv‚ðŠJŽn‚µ‚Ü‚·B
+echo Cloudflare‚ÉƒƒOƒCƒ“‚µ‚Ä‚¢‚È‚¢ê‡Aˆ—‚Ì“r’†‚ÅƒƒOƒCƒ“‚ð‹‚ß‚ç‚ê‚Ü‚·B
+echo ‘±s‚·‚é‚É‚ÍEnterƒL[‚ð‰Ÿ‚µ‚Ä‚­‚¾‚³‚¢B
+pause
 
-:: build ï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ì‘ï¿½ï¿½ÝŠmï¿½Fï¿½Æì¬
+:: build ƒfƒBƒŒƒNƒgƒŠ‚Ì‘¶ÝŠm”F‚Æì¬
 if not exist "%BUILD_DIR%" (
     mkdir "%BUILD_DIR%" || (
-        call :handle_error "buildï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ìì¬ï¿½ÉŽï¿½ï¿½s"
+        call :handle_error "buildƒfƒBƒŒƒNƒgƒŠ‚Ìì¬‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
     )
 )
 
-:: ï¿½ï¿½ï¿½Wï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½[ï¿½ï¿½
+:: ƒ‚ƒWƒ…[ƒ‹‚ðƒNƒ[ƒ“
 cd "%BUILD_DIR%" || (
-    call :handle_error "buildï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ö‚ÌˆÚ“ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "buildƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌˆÚ“®‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo oid4vc-coreï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½...
+echo oid4vc-core‚ðƒNƒ[ƒ“‚µ‚Ä‚¢‚Ü‚·...
 git clone https://github.com/dentsusoken/oid4vc-core || (
-    call :handle_error "oid4vc-coreï¿½ÌƒNï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-core‚ÌƒNƒ[ƒ“‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo oid4vc-prexï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½...
+echo oid4vc-prex‚ðƒNƒ[ƒ“‚µ‚Ä‚¢‚Ü‚·...
 git clone https://github.com/dentsusoken/oid4vc-prex || (
-    call :handle_error "oid4vc-prexï¿½ÌƒNï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-prex‚ÌƒNƒ[ƒ“‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo oid4vc-verifier-endpoint-coreï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½...
+echo oid4vc-verifier-endpoint-core‚ðƒNƒ[ƒ“‚µ‚Ä‚¢‚Ü‚·...
 git clone https://github.com/dentsusoken/oid4vc-verifier-endpoint-core || (
-    call :handle_error "oid4vc-verifier-endpoint-coreï¿½ÌƒNï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-verifier-endpoint-core‚ÌƒNƒ[ƒ“‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo oid4vc-coreï¿½ï¿½ï¿½rï¿½ï¿½ï¿½hï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½...
+echo oid4vc-core‚ðƒrƒ‹ƒh‚µ‚Ä‚¢‚Ü‚·...
 cd "%CORE_DIR%" || (
-    call :handle_error "oid4vc-coreï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ö‚ÌˆÚ“ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-coreƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌˆÚ“®‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
-call npm install || (
-    call :handle_error "oid4vc-coreï¿½ï¿½npm installï¿½ÉŽï¿½ï¿½s"
-)
+call npm install
 call npm run build || (
-    call :handle_error "oid4vc-coreï¿½Ìƒrï¿½ï¿½ï¿½hï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-core‚Ìƒrƒ‹ƒh‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 call npm link || (
-    call :handle_error "oid4vc-coreï¿½ï¿½npm linkï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-core‚Ìnpm link‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo oid4vc-prexï¿½ï¿½ï¿½rï¿½ï¿½ï¿½hï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½...
+echo oid4vc-prex‚ðƒrƒ‹ƒh‚µ‚Ä‚¢‚Ü‚·...
 cd "%PREX_DIR%" || (
-    call :handle_error "oid4vc-prexï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ö‚ÌˆÚ“ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-prexƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌˆÚ“®‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
-call npm install || (
-    call :handle_error "oid4vc-prexï¿½ï¿½npm installï¿½ÉŽï¿½ï¿½s"
-)
+call npm install
 call npm link oid4vc-core || (
-    call :handle_error "oid4vc-coreï¿½Ìƒï¿½ï¿½ï¿½ï¿½Nï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-core‚ÌƒŠƒ“ƒN‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 call npm run build || (
-    call :handle_error "oid4vc-prexï¿½Ìƒrï¿½ï¿½ï¿½hï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-prex‚Ìƒrƒ‹ƒh‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 call npm link || (
-    call :handle_error "oid4vc-prexï¿½ï¿½npm linkï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-prex‚Ìnpm link‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo oid4vc-verifier-endpoint-coreï¿½ï¿½ï¿½rï¿½ï¿½ï¿½hï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½...
+echo oid4vc-verifier-endpoint-core‚ðƒrƒ‹ƒh‚µ‚Ä‚¢‚Ü‚·...
 cd "%ENDPOINT_CORE_DIR%" || (
-    call :handle_error "oid4vc-verifier-endpoint-coreï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ö‚ÌˆÚ“ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-verifier-endpoint-coreƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌˆÚ“®‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
-call npm install || (
-    call :handle_error "oid4vc-verifier-endpoint-coreï¿½ï¿½npm installï¿½ÉŽï¿½ï¿½s"
-)
+call npm install
 call npm link oid4vc-core oid4vc-prex || (
-    call :handle_error "ï¿½Ë‘ï¿½ï¿½ï¿½ï¿½Wï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ìƒï¿½ï¿½ï¿½ï¿½Nï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "ˆË‘¶ƒ‚ƒWƒ…[ƒ‹‚ÌƒŠƒ“ƒN‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 call npm run build || (
-    call :handle_error "oid4vc-verifier-endpoint-coreï¿½Ìƒrï¿½ï¿½ï¿½hï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-verifier-endpoint-core‚Ìƒrƒ‹ƒh‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 call npm link || (
-    call :handle_error "oid4vc-verifier-endpoint-coreï¿½ï¿½npm linkï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-verifier-endpoint-core‚Ìnpm link‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo oid4vc-verifier-endpoint-honoï¿½ï¿½ï¿½rï¿½ï¿½ï¿½hï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½...
+echo oid4vc-verifier-endpoint-hono‚ðƒrƒ‹ƒh‚µ‚Ä‚¢‚Ü‚·...
 cd "%CURRENT_DIR%" || (
-    call :handle_error "oid4vc-verifier-endpoint-honoï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ö‚ÌˆÚ“ï¿½ï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "oid4vc-verifier-endpoint-honoƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌˆÚ“®‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
-call npm install || (
-    call :handle_error "oid4vc-verifier-endpoint-honoï¿½ï¿½npm installï¿½ÉŽï¿½ï¿½s"
-)
+call npm install
 call npm link oid4vc-core oid4vc-prex oid4vc-verifier-endpoint-core || (
-    call :handle_error "ï¿½Ë‘ï¿½ï¿½ï¿½ï¿½Wï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ìƒï¿½ï¿½ï¿½ï¿½Nï¿½ÉŽï¿½ï¿½s"
+    call :handle_error "ˆË‘¶ƒ‚ƒWƒ…[ƒ‹‚ÌƒŠƒ“ƒN‚ÉŽ¸”s‚µ‚Ü‚µ‚½"
 )
 
-echo Verifier Endpointï¿½ÌƒZï¿½bï¿½gï¿½Aï¿½bï¿½vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½B
+echo Verifier Endpoint‚ÌƒZƒbƒgƒAƒbƒv‚ªŠ®—¹‚µ‚Ü‚µ‚½B
 
-:: ï¿½ï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½ÌƒNï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Aï¿½bï¿½v
-call :cleanup
+echo I—¹‚·‚é‚É‚ÍEnterƒL[‚ð‰Ÿ‚µ‚Ä‚­‚¾‚³‚¢B
+pause > nul
+
 exit /b 0 

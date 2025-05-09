@@ -52,27 +52,32 @@ git clone https://github.com/dentsusoken/oid4vc-verifier-endpoint-core || handle
 
 echo "oid4vc-coreをビルドしています..."
 cd $CORE_DIR || handle_error "oid4vc-coreディレクトリへの移動に失敗しました"
-npm install || handle_error "oid4vc-coreのnpm installに失敗しました"
+npm install
 npm run build || handle_error "oid4vc-coreのビルドに失敗しました"
 npm link || handle_error "oid4vc-coreのnpm linkに失敗しました"
 
 echo "oid4vc-prexをビルドしています..."
 cd $PREX_DIR || handle_error "oid4vc-prexディレクトリへの移動に失敗しました"
-npm install || handle_error "oid4vc-prexのnpm installに失敗しました"
+npm install
 npm link oid4vc-core || handle_error "oid4vc-coreのリンクに失敗しました"
 npm run build || handle_error "oid4vc-prexのビルドに失敗しました"
 npm link || handle_error "oid4vc-prexのnpm linkに失敗しました"
 
 echo "oid4vc-verifier-endpoint-coreをビルドしています..."
 cd $ENDPOINT_CORE_DIR || handle_error "oid4vc-verifier-endpoint-coreディレクトリへの移動に失敗しました"
-npm install || handle_error "oid4vc-verifier-endpoint-coreのnpm installに失敗しました"
+npm install
 npm link oid4vc-core oid4vc-prex || handle_error "依存モジュールのリンクに失敗しました"
 npm run build || handle_error "oid4vc-verifier-endpoint-coreのビルドに失敗しました"
 npm link || handle_error "oid4vc-verifier-endpoint-coreのnpm linkに失敗しました"
 
 echo "oid4vc-verifier-endpoint-honoをビルドしています..."
 cd .. || handle_error "oid4vc-verifier-endpoint-honoディレクトリへの移動に失敗しました"
-npm install || handle_error "oid4vc-verifier-endpoint-honoのnpm installに失敗しました"
+npm install
 npm link oid4vc-core oid4vc-prex oid4vc-verifier-endpoint-core || handle_error "依存モジュールのリンクに失敗しました"
 
 echo "Verifier Endpointのセットアップが完了しました。"
+
+echo "終了するにはEnterキーを押してください。"
+read -p ""
+
+exit
