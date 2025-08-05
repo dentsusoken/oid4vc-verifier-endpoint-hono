@@ -22,8 +22,10 @@ import {
   TransactionId,
   RequestId,
   presentationSchema,
-} from 'oid4vc-verifier-endpoint-core';
-import { DynamoDB } from 'oid4vc-core/dynamodb';
+} from '@vecrea/oid4vc-verifier-endpoint-core';
+import { DynamoDB } from '@vecrea/oid4vc-core';
+import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 /**
  * Prefix for ID keys in the KV store.
@@ -133,3 +135,16 @@ export class PresentationDynamoStore {
     );
   };
 }
+
+export const createDynamoDBClient = (
+  endpoint?: string,
+  region?: string,
+  config?: DynamoDBClientConfig
+) => {
+  const client = new DynamoDBClient({
+    endpoint,
+    region,
+    ...config,
+  });
+  return DynamoDBDocumentClient.from(client);
+};

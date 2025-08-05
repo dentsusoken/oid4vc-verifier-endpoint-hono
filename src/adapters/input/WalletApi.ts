@@ -15,24 +15,19 @@
  */
 import * as jose from 'jose';
 import { Handler, Hono } from 'hono';
-import {
-  Jwt,
-  QueryResponse,
-  AuthorizationResponse,
-  AuthorizationResponseData,
-  EmbedOption,
-  RequestId,
-  UrlBuilder,
-} from 'oid4vc-verifier-endpoint-core';
-import { PresentationExchange } from 'oid4vc-prex';
-import { getDI } from './getDI';
 import { Env } from '../../env';
 import { cors } from 'hono/cors';
+import { GetDI } from '../../di';
+import {
+  GetRequestObjectController,
+  PostWalletResponseController,
+} from './controller/wallet';
+import { HTTPException } from 'hono/http-exception';
 
 /**
  * The WEB API available to the wallet
  */
-export class WalletApi {
+export class WalletApi<T extends Env> {
   /**
    * The routes available to the wallet
    */
@@ -43,7 +38,8 @@ export class WalletApi {
     presentationDefinitionPath: string,
     walletResponsePath: string,
     getPublicJWKSetPath: string,
-    jarmJWKSetPath: string
+    jarmJWKSetPath: string,
+    private readonly getDI: GetDI<T>
   ) {
     this.route = new Hono<Env>()
       .use('*', (c, next) => cors({ origin: '*' })(c, next))
@@ -60,35 +56,31 @@ export class WalletApi {
    * If found, the Request Object will be returned as JWT
    */
   private handleGetRequestObject(): Handler {
-    return async (c) => {
-      const requestObjectFound = (jwt: string) =>
-        c.text(jwt, 200, { 'Content-Type': 'application/oauth-authz-req+jwt' });
+    try {
+      const controller = new GetRequestObjectController(this.getDI);
 
-      const { portsInput } = getDI(c);
-      const getRequestObject = portsInput.getRequestObject();
-      const requestId = new RequestId(c.req.param('requestId'));
+      console.log('GetRequestObjectController created successfully');
 
-      console.info(`Handling GetRequestObject for ${requestId.value} ...`);
-
-      const result = await getRequestObject(requestId);
-      if (result.constructor === QueryResponse.Found) {
-        return requestObjectFound((result as QueryResponse.Found<Jwt>).value);
-      }
-      if (result.constructor === QueryResponse.NotFound) {
-        return c.text('', 404);
-      }
-      if (result.constructor === QueryResponse.InvalidState) {
-        return c.text('', 400);
-      }
-    };
+      return controller.handler();
+    } catch (error) {
+      console.error('Failed to create GetRequestObjectController:', {
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+      throw new HTTPException(500, {
+        message: 'Failed to get request object',
+      });
+    }
   }
   /**
    * Handles a request placed by wallet, input order to obtain
    * the [PresentationDefinition] of the presentation
    */
   private handleGetPresentationDefinition(): Handler {
-    return (c) => {
-      return c.text('', 404);
+    return (_) => {
+      throw new HTTPException(500, {
+        message: 'Failed to get presentation definition',
+      });
       // const { portsInput } = getDI(c);
       // const pdFound = (pd: PresentationDefinition) => c.json(pd, 200);
       // const requestId = new RequestId(c.req.param('requestId'));
@@ -115,39 +107,21 @@ export class WalletApi {
    * and the verifiableCredentials
    */
   private handlePostWalletResponse(): Handler {
-    return async (c) => {
-      try {
-        const { portsInput } = getDI(c);
-        const postWalletResponse = portsInput.postWalletResponse();
+    try {
+      const controller = new PostWalletResponseController(this.getDI);
 
-        console.info('Handling PostWalletResponse ...');
+      console.log('PostWalletResponseController created successfully');
 
-        const walletResponse = await WalletApi.walletResponse(
-          Object.fromEntries((await c.req.formData()).entries())
-        );
-        try {
-          const result = await postWalletResponse(walletResponse);
-          const response = result.getOrThrow();
-          console.info('PostWalletResponse processed');
-          if (!response) {
-            console.info('Verifier UI will poll for Wallet Response');
-            return c.json({}, 200);
-          } else {
-            console.info(`Wallet must redirect to ${response.redirectUri}`);
-            return c.json({ redirect_uri: response.redirectUri }, 200);
-          }
-        } catch (e) {
-          console.error('While handling post of wallet response ', e);
-          return c.text('', 400);
-        }
-      } catch (e) {
-        console.error(
-          'While handling post of wallet response failed to decode JSON',
-          e
-        );
-        return c.text('', 400);
-      }
-    };
+      return controller.handler();
+    } catch (error) {
+      console.error('Failed to create PostWalletResponseController:', {
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+      throw new HTTPException(500, {
+        message: 'Failed to post wallet response',
+      });
+    }
   }
 
   private handleGetPublicJwkSet(): Handler {
@@ -168,7 +142,9 @@ export class WalletApi {
    */
   private handleGetJarmJwks(): Handler {
     return (c) => {
-      return c.text('', 404);
+      throw new HTTPException(500, {
+        message: 'Failed to get Jarm Jwks',
+      });
       // const requestId = new RequestId(c.req.param('requestId'));
       // console.info(`Handling GetJarmJwks for ${requestId.value} ...`);
       // const queryResponse = this.getJarmJwks(requestId);
@@ -185,71 +161,4 @@ export class WalletApi {
       // }
     };
   }
-}
-export namespace WalletApi {
-  export const walletResponse = async (
-    req: Record<string, string | undefined>
-  ): Promise<AuthorizationResponse> => {
-    const directPost = async () => {
-      const {
-        state,
-        id_token,
-        vp_token,
-        presentation_submission,
-        error,
-        error_description,
-      } = req;
-
-      const response: AuthorizationResponseData = {
-        state,
-        error,
-        errorDescription: error_description,
-        idToken: id_token,
-        vpToken: vp_token,
-        presentationSubmission: (
-          await PresentationExchange.jsonParse.decodePresentationSubmission(
-            presentation_submission!
-          )
-        ).value,
-      };
-      return new AuthorizationResponse.DirectPost(response);
-    };
-
-    const directPostJwt = () => {
-      const { state, response: jwt } = req;
-      if (!jwt || !state) {
-        return;
-      }
-      return new AuthorizationResponse.DirectPostJwt(state, jwt);
-    };
-
-    return directPostJwt() || (await directPost());
-  };
-
-  // export const requestJwtByReference = (baseUrl: string) => {
-  //   return urlBuilder(baseUrl, REQUEST_JWT_PATH);
-  // };
-  // export const presentationDefinitionByReference = (baseUrl: string) => {
-  //   return urlBuilder(baseUrl, PRESENTATION_DEFINITION_PATH);
-  // };
-  // export const publicJwkSet = (baseUrl: string) => {
-  //   return `${baseUrl}${GET_PUBLIC_JWK_SET_PATH}`;
-  // };
-  // export const jarmJwksByReference = (baseUrl: string) => {
-  //   return urlBuilder(baseUrl, GET_PUBLIC_JWK_SET_PATH);
-  // };
-
-  // export const directPost = (baseUrl: string) => {
-  //   return `${baseUrl}${WALLET_RESPONSE_PATH}`;
-  // };
-
-  export const urlBuilder = (baseUrl: string, pathTemplate: string) => {
-    return new EmbedOption.ByReference(
-      new UrlBuilder.Fix(`${baseUrl}${pathTemplate}`)
-    );
-
-    // return new EmbedOption.ByReference(function (requestId: RequestId) {
-    //   return `${baseUrl}${pathTemplate.replace(':requestId', requestId.value)}`;
-    // });
-  };
 }

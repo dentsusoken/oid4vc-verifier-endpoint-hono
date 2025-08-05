@@ -1,28 +1,29 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/aws-lambda';
 import { Env } from './env';
-import { LambdaVerifierApi } from './adapters/input/LambdaVerifierApi';
-import { LambdaWalletApi } from './adapters/input/LambdaWalletApi';
-import { HonoConfiguration } from './di/HonoConfiguration';
-import { setupLambdaMiddleware } from './middleware/setup';
+import { VerifierApi } from './adapters/input/VerifierApi';
+import { WalletApi } from './adapters/input/WalletApi';
+import { ConfigurationImpl, getDI } from './di/aws-lambda';
 
-const configuration = new HonoConfiguration();
+const configuration = new ConfigurationImpl();
 
-const verifierApi = new LambdaVerifierApi(
+const verifierApi = new VerifierApi(
   configuration.initTransactionPath(),
   configuration.getWalletResponsePath(':transactionId'),
-  configuration.frontendCorsOrigin()
+  configuration.frontendCorsOrigin(),
+  getDI
 );
-const walletApi = new LambdaWalletApi(
+
+const walletApi = new WalletApi(
   configuration.requestJWTPath(':requestId'),
   configuration.presentationDefinitionPath(':requestId'),
   configuration.walletResponsePath(),
   configuration.getPublicJWKSetPath(),
-  configuration.jarmJWKSetPath(':requestId')
+  configuration.jarmJWKSetPath(':requestId'),
+  getDI
 );
 
 const app = new Hono<Env>()
-  .use(setupLambdaMiddleware)
   .route('/', verifierApi.route)
   .route('/', walletApi.route);
 

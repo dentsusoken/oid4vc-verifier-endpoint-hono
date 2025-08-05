@@ -22,3 +22,6 @@ id = "cdf0c453ab064798957f56e006c78efc"
 
 # [ai]
 # binding = "AI"
+
+[dev]
+port = 8080

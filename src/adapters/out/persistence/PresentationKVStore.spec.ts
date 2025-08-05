@@ -13,7 +13,7 @@ import {
   ResponseModeOption,
   EmbedOption,
   GetWalletResponseMethod,
-} from 'oid4vc-verifier-endpoint-core';
+} from '@vecrea/oid4vc-verifier-endpoint-core';
 import { PresentationKVStore } from './PresentationKVStore';
 
 describe('PresentationKVStore', () => {
