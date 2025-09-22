@@ -1,5 +1,6 @@
 import { ClientIdSchemeName } from '@vecrea/oid4vc-verifier-endpoint-core';
 import { LambdaEvent, LambdaContext } from 'hono/aws-lambda';
+import { PresentationDurableObject } from './adapters/out/persistence/PresentationDurableObject';
 
 export type BaseBindings = {
   JAR_SIGNING_PRIVATE_JWK: string;
@@ -10,7 +11,7 @@ export type BaseBindings = {
 };
 
 export type CloudflareBindings = BaseBindings & {
-  PRESENTATION_KV: KVNamespace;
+  PRESENTATION: DurableObjectNamespace<PresentationDurableObject>;
 };
 
 export type AwsSecrets = BaseBindings & {

@@ -7,10 +7,15 @@ import {
   LoadPresentationByRequestId,
   StorePresentation,
 } from '@vecrea/oid4vc-verifier-endpoint-core';
-import { PresentationKVStore } from '../../adapters/out/persistence/PresentationKVStore';
+import {
+  createLoadPresentationById,
+  createLoadPresentationByRequestId,
+  createStorePresentation,
+  PresentationDurableObject,
+} from '../../adapters/out/persistence/PresentationDurableObject';
 
 export class PortsOutImpl extends PortsOutImplCore {
-  #presentationKVStore: PresentationKVStore;
+  #presentationStub: DurableObjectStub<PresentationDurableObject>;
 
   /**
    * Creates an instance of HonoPortsOut.
@@ -20,7 +25,9 @@ export class PortsOutImpl extends PortsOutImplCore {
    */
   constructor(configuration: Configuration, c: Context<CloudflareEnv>) {
     super(configuration);
-    this.#presentationKVStore = new PresentationKVStore(c.env.PRESENTATION_KV);
+    this.#presentationStub = c.env.PRESENTATION.get(
+      c.env.PRESENTATION.idFromName('presentation')
+    );
   }
 
   /**
@@ -28,19 +35,22 @@ export class PortsOutImpl extends PortsOutImplCore {
    * @returns {LoadPresentationById} A function to load a presentation by ID.
    */
   loadPresentationById = (): LoadPresentationById =>
-    this.#presentationKVStore.loadPresentationById;
+    createLoadPresentationById(this.#presentationStub);
 
   /**
    * Returns a function to load a presentation by its request ID.
    * @returns {LoadPresentationByRequestId} A function to load a presentation by request ID.
    */
   loadPresentationByRequestId = (): LoadPresentationByRequestId =>
-    this.#presentationKVStore.loadPresentationByRequestId;
+    createLoadPresentationByRequestId(
+      this.#presentationStub,
+      this.loadPresentationById()
+    );
 
   /**
    * Returns a function to store a presentation.
    * @returns {StorePresentation} A function to store a presentation.
    */
   storePresentation = (): StorePresentation =>
-    this.#presentationKVStore.storePresentation;
+    createStorePresentation(this.#presentationStub);
 }

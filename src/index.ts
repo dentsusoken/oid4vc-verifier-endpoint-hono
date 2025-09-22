@@ -25,4 +25,6 @@ const app = new Hono<Env>()
   .route('/', verifierApi.route)
   .route('/', walletApi.route);
 
+// Export for DurableObject
+export { PresentationDurableObject } from './adapters/out/persistence/PresentationDurableObject';
 export default app;
