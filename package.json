@@ -3,12 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev src/index.ts",
-    "build": "esbuild --bundle --outfile=./dist/index.js --platform=node --target=node20 ./src/aws-lambda.ts",
-    "zip": "zip -j lambda.zip dist/index.js",
     "deploy": "wrangler deploy --minify src/index.ts",
-    "build-container": "sam build --use-container --build-image public.ecr.aws/sam/build-nodejs20.x --debug --skip-pull-image",
-    "start-api": "sam local start-api --host 0.0.0.0 --warm-containers EAGER --debug --container-host host.docker.internal --container-host-interface 0.0.0.0 --docker-network hono-lambda-dynamodb_devcontainer_dev-network",
-    "emulate:lambda": "npm run build && npm run build-container && npm run start-api",
     "test": "vitest"
   },
   "dependencies": {
@@ -22,14 +17,7 @@
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.114.1-alpha.0",
     "@cloudflare/workers-types": "^4.20240529.0",
     "@types/node": "^22.13.10",
-    "aws-cdk": "^2.114.1",
-    "aws-cdk-lib": "^2.114.1",
-    "constructs": "^10.3.0",
-    "esbuild": "^0.25.8",
     "miniflare": "^3.20240806.1",
-    "serverless": "^3.38.0",
-    "serverless-esbuild": "^1.48.5",
-    "serverless-offline": "^13.9.0",
     "tsx": "^4.6.0",
     "vitest": "^3.2.4",
     "wrangler": "^4.27.0"
