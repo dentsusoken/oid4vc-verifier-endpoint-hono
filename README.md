@@ -1,8 +1,37 @@
 # oid4vc-verifier-endpoint-hono
 
-## How to build
+A Hono-based implementation of the OID4VC Verifier Endpoint.
 
-### Create .dev.vars
+## Table of Contents
+
+- [Setup](#setup)
+- [Local Development](#local-development)
+- [Deployment](#deployment)
+- [AWS Lambda Emulation](#aws-lambda-emulation)
+- [AWS Lambda Deployment](#aws-lambda-deployment)
+
+## Setup
+
+### Prerequisites
+
+#### Clone Repository
+
+```bash
+git clone https://github.com/dentsusoken/oid4vc-verifier-endpoint-hono
+cd oid4vc-verifier-endpoint-hono
+```
+
+#### Install Dependencies
+
+```bash
+npm install
+```
+
+### Cloudflare Setup
+
+#### Create .dev.vars
+
+Create a `.dev.vars` file in the project root:
 
 ```bash
 JAR_SIGNING_PRIVATE_JWK="YOUR_JAR_SIGNING_PRIVATE_JWK"
@@ -12,106 +41,110 @@ PUBLIC_URL_VERIFIER_ENDPOINT="http://localhost:8080"
 CORS_ORIGIN="*"
 ```
 
-### Install dependencies
+## Local Development
 
-npm install
+### Run Locally
 
-### Run locally
-
+```bash
 npm run dev
+```
 
-### Deploy
+## Deployment
 
+### Deploy to Cloudflare Workers
+
+```bash
 npm run deploy
+```
 
-## How to emulate AWS Lambda (localstack)
+## AWS Setup
 
-1. Clone or copy the following repositories into the `./build` directory:
-   - [`oid4vc-core`](https://github.com/dentsusoken/oid4vc-core.git)
-   - [`oid4vc-prex`](https://github.com/dentsusoken/oid4vc-prex.git)
-   - [`oid4vc-verifier-endpoint-core`](https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git)
+This section describes the setup procedure for the oid4vc-verifier-endpoint-hono application in an AWS Lambda environment.
 
-   ```bash
-   # If cloning new repositories
-   cd build
-   git clone https://github.com/dentsusoken/oid4vc-core.git
-   git clone https://github.com/dentsusoken/oid4vc-prex.git
-   git clone https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git
-   
-   # Or if copying existing local development repositories
-   cp -r /path/to/local/oid4vc-core ./build/
-   cp -r /path/to/local/oid4vc-prex ./build/
-   cp -r /path/to/local/oid4vc-verifier-endpoint-core ./build/
-   ```
+### Prerequisites
 
-2. Create .env
-   ```bash
-   JAR_SIGNING_PRIVATE_JWK=YOUR_JAR_SIGNING_PRIVATE_JWK
-   CLIENT_ID=YOUR_CLIENT_ID
-   CLIENT_ID_SCHEME=x509_san_dns
-   PUBLIC_URL_VERIFIER_ENDPOINT=http://localhost:8080
-   CORS_ORIGIN=*
-   DEPLOY_ENV=local
-   ```
+- Docker installed
+- VSCode Dev Container available
 
-3. Rebuilding the Image and Starting the Container:
-   ```bash
-   docker-compose up --build
-   ```
-## How to deploy AWS Lambda
+### Setup Steps
 
-1. Clone or copy the following repositories into the `./build` directory:
-   - [`oid4vc-core`](https://github.com/dentsusoken/oid4vc-core.git)
-   - [`oid4vc-prex`](https://github.com/dentsusoken/oid4vc-prex.git)
-   - [`oid4vc-verifier-endpoint-core`](https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git)
+#### 1. Environment Variables Configuration
 
-   ```bash
-   # If cloning new repositories
-   cd build
-   git clone https://github.com/dentsusoken/oid4vc-core.git
-   git clone https://github.com/dentsusoken/oid4vc-prex.git
-   git clone https://github.com/dentsusoken/oid4vc-verifier-endpoint-core.git
-   
-   # Or if copying existing local development repositories
-   cp -r /path/to/local/oid4vc-core ./build/
-   cp -r /path/to/local/oid4vc-prex ./build/
-   cp -r /path/to/local/oid4vc-verifier-endpoint-core ./build/
-   ```
+Copy the `.env.template` file to create a `.env` file and configure your AWS credentials.
 
-2. IAM Role Configuration:
+```bash
+cp .env.template .env
+```
 
-   **Add to the IAM role you are using**
+Set the following information in the `.env` file:
 
-   * AWSLambdaBasicExecutionRole
-   * AWSLambdaDynamoDBExecutionRole
-   * dynamodb:GetItem
-   * SecretsManagerReadWrite
+```bash
+# AWS credentials
+AWS_PROD_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
+AWS_PROD_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
+AWS_PROD_REGION=YOUR_AWS_REGION
 
-3. Set Environment Variables for SecretsManager:
-   ```bash
-   JAR_SIGNING_PRIVATE_JWK=YOUR_JAR_SIGNING_PRIVATE_JWK
-   CLIENT_ID=YOUR_CLIENT_ID
-   CLIENT_ID_SCHEME=x509_san_dns
-   PUBLIC_URL_VERIFIER_ENDPOINT=http://localhost:8080
-   CORS_ORIGIN=*
-   DYNAMODB_TABLE_VERIFIER_ENDPOINT=PRESENTATION_KV
-   ```
+# LocalStack configuration (for local development)
+LOCALSTACK_ACCESS_KEY_ID=test
+LOCALSTACK_SECRET_ACCESS_KEY=test
+LOCALSTACK_ENDPOINT_URL=http://localhost:4566
+LOCALSTACK_REGION=ap-northeast-1
+```
 
-4. Create .env
-   ```bash
-   DYNAMODB_TABLE_VERIFIER_ENDPOINT=PRESENTATION_KV
-   AWS_DEFAULT_REGION=ap-northeast-1
-   LAMBDA_ROLE_NAME=arn:aws:iam::xxx:role/role-name
-   AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
-   AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
-   ```
+#### 2. LocalStack Environment Deployment
 
-4. Build:
-   ```bash
-   docker build -t verifier-endpoint:latest .
-   ```
+When using LocalStack as a local development environment:
 
-5. Run:
-   ```bash
-   docker run --env-file ./.env verifier-endpoint:latest
-   ```
+```bash
+# Deploy to LocalStack
+./shell/deployLocalStack.sh
+```
+
+After deployment, configure appropriate secret information in SecretsManager.
+
+#### 3. Start LocalStack Environment
+
+Start the LocalStack environment using Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+## AWS Lambda Deployment
+
+#### AWS Production Environment Deployment
+
+When deploying to AWS production environment:
+
+```bash
+# Deploy to AWS production environment
+./shell/deployAws.sh
+```
+
+For initial deployment or when cleanup is needed:
+
+```bash
+# Deploy with cleanup
+./shell/deployAws.sh --clean
+```
+
+After deployment, configure appropriate secret information in AWS SecretsManager.
+
+### Deploy Script Details
+
+#### deployLocalStack.sh
+
+Script for deploying to LocalStack environment:
+
+- Cleanup of SAM stack
+- Build SAM application
+- Deploy to LocalStack
+
+#### deployAws.sh
+
+Script for deploying to AWS production environment:
+
+- `--clean` option for deployment with cleanup
+- Cleanup of SAM stack
+- Build SAM application
+- Deploy to AWS production environment
