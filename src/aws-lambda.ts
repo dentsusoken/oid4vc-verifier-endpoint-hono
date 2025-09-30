@@ -1,9 +1,12 @@
 import { Hono } from 'hono';
-import { handle } from 'hono/aws-lambda';
+import { handle, defaultIsContentTypeBinary } from 'hono/aws-lambda';
 import { Env } from './env';
 import { VerifierApi } from './adapters/input/VerifierApi';
 import { WalletApi } from './adapters/input/WalletApi';
 import { ConfigurationImpl, getDI } from './di/aws-lambda';
+import { dynamoDBMiddleware } from '@squilla/hono-aws-middlewares/dynamodb';
+import { secretsManagerMiddleware } from '@squilla/hono-aws-middlewares/secrets-manager';
+import { setupAwsLambda } from './middleware/setupAwsLambda';
 
 const configuration = new ConfigurationImpl();
 
@@ -24,8 +27,19 @@ const walletApi = new WalletApi(
 );
 
 const app = new Hono<Env>()
+  .get('/', (c) => c.json({ message: 'Hello, World!' }))
+  .use(secretsManagerMiddleware())
+  .use(dynamoDBMiddleware())
+  .use(setupAwsLambda())
   .route('/', verifierApi.route)
   .route('/', walletApi.route);
 
+const isContentTypeBinary = (contentType: string) => {
+  return (
+    !/^application\/oauth-authz-req\+jwt$/.test(contentType) &&
+    defaultIsContentTypeBinary(contentType)
+  );
+};
+
 // export default app;
-export const handler = handle(app);
+export const handler = handle(app, { isContentTypeBinary });

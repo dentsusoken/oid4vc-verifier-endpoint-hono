@@ -1,7 +1,5 @@
 import { Context } from 'hono';
 import { AwsEnv, AwsSecrets } from '../../env';
-import SecretsManager from 'aws-sdk/clients/secretsmanager';
-import { createDynamoDBClient } from '../../adapters/out/persistence/PresentationDynamoStore';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import {
   AbstractConfiguration,
@@ -14,49 +12,27 @@ import {
 
 export class ConfigurationImpl extends AbstractConfiguration {
   #secrets?: AwsSecrets;
+  #dynamoDBClient?: DynamoDBDocumentClient;
 
-  constructor(_?: Context<AwsEnv>) {
+  constructor(ctx?: Context<AwsEnv>) {
     super();
-  }
-
-  async loadSecrets() {
-    const secretsManager = new SecretsManager({
-      region: process.env.AWS_REGION,
-      endpoint: process.env.SECRETS_MANAGER_ENDPOINT,
-    });
-
-    const data = await secretsManager
-      .getSecretValue({ SecretId: process.env.SECRETS_MANAGER_SECRET_ID || '' })
-      .promise();
-
-    this.#secrets = JSON.parse(data.SecretString ?? '{}');
+    this.#secrets = ctx?.env;
+    this.#dynamoDBClient = ctx?.get('DynamoDBClient');
   }
 
   jarSigningPrivateJwk = (): string => {
-    if (!this.#secrets) {
-      this.loadSecrets();
-    }
     return this.#secrets?.JAR_SIGNING_PRIVATE_JWK || '';
   };
 
   clientId = (): string => {
-    if (!this.#secrets) {
-      this.loadSecrets();
-    }
     return this.#secrets?.CLIENT_ID || '';
   };
 
   clientIdSchemeName = (): ClientIdSchemeName => {
-    if (!this.#secrets) {
-      this.loadSecrets();
-    }
     return this.#secrets?.CLIENT_ID_SCHEME || 'x509_san_dns';
   };
 
   publicUrl = (): string => {
-    if (!this.#secrets) {
-      this.loadSecrets();
-    }
     return this.#secrets?.PUBLIC_URL || '';
   };
 
@@ -69,26 +45,17 @@ export class ConfigurationImpl extends AbstractConfiguration {
   maxAge = (): Duration => DurationLuxon.Factory.ofMinutes(5);
 
   frontendCorsOrigin = (): string => {
-    if (!this.#secrets) {
-      this.loadSecrets();
-    }
-    return this.#secrets?.CORS_ORIGIN || '';
+    return this.#secrets?.CORS_ORIGIN || '*';
   };
 
   dynamoDBClient(): DynamoDBDocumentClient {
-    if (!this.#secrets) {
-      this.loadSecrets();
-    }
-    return createDynamoDBClient(
-      this.#secrets?.DYNAMODB_ENDPOINT,
-      process.env.AWS_REGION
-    );
+    return DynamoDBDocumentClient.from(this.#dynamoDBClient!);
   }
 
   dynamoDBTable(): string {
-    if (!this.#secrets) {
-      this.loadSecrets();
-    }
-    return this.#secrets?.DYNAMODB_TABLE ?? '';
+    return (
+      process.env.VerifierEndpointPresentationTable ??
+      'oid4vc-verifier-endpoint-presentation-table'
+    );
   }
 }

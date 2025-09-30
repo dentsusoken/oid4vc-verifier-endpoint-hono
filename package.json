@@ -7,8 +7,10 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.709.0",
+    "@aws-sdk/client-dynamodb": "^3.896.0",
+    "@aws-sdk/client-secrets-manager": "^3.896.0",
     "@aws-sdk/lib-dynamodb": "^3.709.0",
+    "@squilla/hono-aws-middlewares": "^1.1.1",
     "hono": "^4.5.5",
     "jose": "^5.6.3"
   },
