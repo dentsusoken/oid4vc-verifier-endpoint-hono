@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "wrangler dev src/index.ts",
     "deploy": "wrangler deploy --minify src/index.ts",
+    "build": "esbuild src/aws-lambda.ts --bundle --minify --sourcemap --platform=node --target=es2020 --outfile=dist/index.js",
     "test": "vitest"
   },
   "dependencies": {
@@ -16,7 +17,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240529.0",
-    "@types/node": "^22.13.10",
+    "@types/aws-lambda": "^8.10.153",
+    "@types/node": "^24.2.0",
+    "esbuild": "^0.25.10",
     "miniflare": "^3.20240806.1",
     "tsx": "^4.6.0",
     "vitest": "^3.2.4",

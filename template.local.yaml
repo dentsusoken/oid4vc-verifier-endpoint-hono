@@ -19,10 +19,6 @@ Parameters:
     Type: String
     Default: oid4vc-verifier-endpoint-presentation-table
     Description: 'DynamoDB table name for presentation'
-  ImageTag:
-    Type: String
-    Default: latest
-    Description: 'Image tag'
 
 Resources:
   # Secrets Manager
@@ -69,7 +65,9 @@ Resources:
   OID4VCVerifierEndpointFunction:
     Type: AWS::Serverless::Function
     Properties:
-      PackageType: Image
+      CodeUri: ./
+      Handler: aws-lambda.handler
+      Runtime: nodejs22.x
       Timeout: 600
       Architectures:
         - x86_64
@@ -126,6 +124,18 @@ Resources:
             Method: GET
             RestApiId: !Ref OID4VCVerifierEndpointApi
     Metadata:
-      DockerTag: !Ref ImageTag
-      DockerContext: .
-      Dockerfile: Dockerfile
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: 'es2020'
+        Sourcemap: true
+        EntryPoints:
+          - src/aws-lambda.ts
+
+Outputs:
+  APIGatewayId:
+    Description: 'API Gateway ID'
+    Value: !Ref OID4VCVerifierEndpointApi
+  LocalStackApi:
+    Description: 'LocalStack API Gateway endpoint URL'
+    Value: !Sub 'http://localhost:14566/restapis/${OID4VCVerifierEndpointApi}/${ApiStageName}/_user_request_/'

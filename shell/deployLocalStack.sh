@@ -10,7 +10,7 @@ cleanup() {
 # Build process
 build() {
     echo "Building SAM application..."
-    sam build
+    sam build -t template.local.yaml
 }
 
 # Deploy process
@@ -50,6 +50,7 @@ main() {
         set_localstack_credentials
         exit 1
     }
+    
 }
 
 # Execute script
