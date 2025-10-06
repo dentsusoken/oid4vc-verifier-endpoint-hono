@@ -1,4 +1,4 @@
-# oid4vc-verifier-endpoint-hono
+# OID4VC Verifier Endpoint (Hono)
 
 A Hono-based implementation of the OID4VC Verifier Endpoint.
 
@@ -7,8 +7,9 @@ A Hono-based implementation of the OID4VC Verifier Endpoint.
 - [Setup](#setup)
 - [Local Development](#local-development)
 - [Deployment](#deployment)
-- [AWS Lambda Emulation](#aws-lambda-emulation)
-- [AWS Lambda Deployment](#aws-lambda-deployment)
+- [AWS Setup](#aws-setup)
+- [LocalStack Deployment](#localstack-deployment)
+- [AWS Deployment](#aws-deployment)
 
 ## Setup
 
@@ -37,7 +38,7 @@ Create a `.dev.vars` file in the project root:
 JAR_SIGNING_PRIVATE_JWK="YOUR_JAR_SIGNING_PRIVATE_JWK"
 CLIENT_ID="YOUR_CLIENT_ID"
 CLIENT_ID_SCHEME="x509_san_dns"
-PUBLIC_URL_VERIFIER_ENDPOINT="http://localhost:8080"
+PUBLIC_URL="http://localhost:8080"
 CORS_ORIGIN="*"
 ```
 
@@ -68,7 +69,7 @@ This section describes the setup procedure for the oid4vc-verifier-endpoint-hono
 
 ### Setup Steps
 
-#### 1. Environment Variables Configuration
+#### Environment Variables Configuration
 
 Copy the `.env.template` file to create a `.env` file and configure your AWS credentials.
 
@@ -83,15 +84,26 @@ Set the following information in the `.env` file:
 AWS_PROD_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
 AWS_PROD_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
 AWS_PROD_REGION=YOUR_AWS_REGION
+AWS_ECR_REPOSITORY=YOUR_ECR_REPOSITORY
 
 # LocalStack configuration (for local development)
 LOCALSTACK_ACCESS_KEY_ID=test
 LOCALSTACK_SECRET_ACCESS_KEY=test
-LOCALSTACK_ENDPOINT_URL=http://localhost:4566
+LOCALSTACK_ENDPOINT_URL=http://localstack:4566
 LOCALSTACK_REGION=ap-northeast-1
+LOCALSTACK_ECR_REPOSITORY=
 ```
 
-#### 2. LocalStack Environment Deployment
+#### VSCode Dev Container Startup
+
+Start the Dev Container in VSCode:
+
+1. Open the project in VSCode
+2. Open the command palette (Ctrl+Shift+P)
+3. Select "Dev Containers: Reopen in Container"
+4. Wait for the container to start
+
+## LocalStack Deployment
 
 When using LocalStack as a local development environment:
 
@@ -102,17 +114,7 @@ When using LocalStack as a local development environment:
 
 After deployment, configure appropriate secret information in SecretsManager.
 
-#### 3. Start LocalStack Environment
-
-Start the LocalStack environment using Docker Compose:
-
-```bash
-docker-compose up --build
-```
-
-## AWS Lambda Deployment
-
-#### AWS Production Environment Deployment
+## AWS Deployment
 
 When deploying to AWS production environment:
 
