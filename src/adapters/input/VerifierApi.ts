@@ -14,36 +14,41 @@
  * limitations under the License.
  */
 import { Hono, Context, Handler } from 'hono';
-import {
-  InitTransactionTO,
-  TransactionId,
-  ResponseCode,
-  WalletResponseTO,
-  QueryResponse,
-} from 'oid4vc-verifier-endpoint-core';
-import { getDI } from './getDI';
+import { HTTPException } from 'hono/http-exception';
 import { Env } from '../../env';
 import { cors } from 'hono/cors';
+import { GetDI } from '../../di';
+import {
+  InitTransactionController,
+  GetWalletResponseController,
+} from './controller/verifier';
 
-export class VerifierApi {
+export class VerifierApi<T extends Env> {
   /**
    * The routes available to the frontend
    */
-  public route: Hono<Env>;
+  public route: Hono;
 
   constructor(
     initTransactionPath: string,
     getWalletResponsePath: string,
-    _: string
+    _: string,
+    private readonly getDI: GetDI<T>
   ) {
-    this.route = new Hono<Env>()
+    this.route = new Hono()
       .use('*', (c, next) => {
-        if (!c.env.CORS_ORIGIN) {
+        const { config } = getDI(c as unknown as Context<T>);
+        if (!config.frontendCorsOrigin()) {
           return cors({ origin: '*' })(c, next);
         }
-        const origin = c.env.CORS_ORIGIN.includes('[')
-          ? JSON.parse(c.env.CORS_ORIGIN)
-          : c.env.CORS_ORIGIN;
+        let origin:
+          | string
+          | string[]
+          | ((origin: string, c: Context<T>) => string | null | undefined) =
+          config.frontendCorsOrigin();
+        if (typeof origin === 'string') {
+          origin = origin.includes('[') ? JSON.parse(origin) : origin;
+        }
         return cors({ origin })(c, next);
       })
       .post(initTransactionPath, this.handleInitTransation())
@@ -51,23 +56,21 @@ export class VerifierApi {
   }
 
   private handleInitTransation(): Handler {
-    return async (c) => {
-      const { portsInput } = getDI(c);
-      const initTransaction = portsInput.initTransaction();
+    try {
+      const controller = new InitTransactionController(this.getDI);
 
-      const input = InitTransactionTO.fromJSON(await c.req.json());
-      console.info(`Handling InitTransaction nonce=${input.nonce} ... `);
+      console.log('InitTransactionController created successfully');
 
-      const result = await initTransaction(input);
-      if (result.isFailure()) {
-        const error = result.error;
-        console.warn('While handling InitTransaction', error);
-        return asBadRequest(c, error.message);
-      }
-      const it = result.value!;
-      console.info(`Initiated transaction tx ${it.transactionId}`);
-      return c.json(it.toJSON());
-    };
+      return controller.handler();
+    } catch (error) {
+      console.error('Failed to create InitTransactionController:', {
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+      throw new HTTPException(500, {
+        message: 'Failed to initialize transaction',
+      });
+    }
   }
 
   /**
@@ -75,37 +78,21 @@ export class VerifierApi {
    * the wallet authorization response
    */
   private handleGetWalletResponse(): Handler {
-    return async (c) => {
-      const found = (walletResponse: WalletResponseTO) =>
-        c.json(walletResponse.toJSON(), 200);
+    try {
+      const controller = new GetWalletResponseController(this.getDI);
 
-      const { portsInput } = getDI(c);
-      const getWalletResponse = portsInput.getWalletResponse();
+      console.log('GetWalletResponseController created successfully');
 
-      const responseCodeValue = c.req.query('response_code');
-      const transactionId = new TransactionId(c.req.param('transactionId'));
-      const responseCode = responseCodeValue
-        ? new ResponseCode(responseCodeValue)
-        : undefined;
-
-      console.info(
-        `Handling GetWalletResponse for tx ${
-          transactionId.value
-        } and response_code: ${responseCode ? responseCode.value : 'n/a'}. ...`
-      );
-
-      const result = await getWalletResponse(transactionId, responseCode);
-      if (result.constructor === QueryResponse.NotFound) {
-        return c.text(result.message, 404);
-      }
-      if (result.constructor === QueryResponse.InvalidState) {
-        return asBadRequest(c, result.message);
-      }
-      if (result.constructor === QueryResponse.Found) {
-        return found(result.value);
-      }
-      return c.text('Something went wrong...', 500);
-    };
+      return controller.handler();
+    } catch (error) {
+      console.error('Failed to create GetWalletResponseController:', {
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+      throw new HTTPException(500, {
+        message: 'Failed to get wallet response',
+      });
+    }
   }
 
   /**
@@ -138,6 +125,3 @@ export class VerifierApi {
   //   };
   // }
 }
-
-const asBadRequest = (c: Context, error?: string) =>
-  c.text(error ?? 'Something went wrong...', 400);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Presentation } from 'oid4vc-verifier-endpoint-core';
+import { Presentation } from '@vecrea/oid4vc-verifier-endpoint-core';
 
 /**
  * Interface representing a stored entry for a presentation.

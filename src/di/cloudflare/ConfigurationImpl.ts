@@ -1,4 +1,6 @@
 import { Context } from 'hono';
+import { CloudflareEnv } from '../../env';
+import { env } from 'hono/adapter';
 import {
   AbstractConfiguration,
   EmbedOptionName,
@@ -6,16 +8,14 @@ import {
   Duration,
   DurationLuxon,
   ClientIdSchemeName,
-} from 'oid4vc-verifier-endpoint-core';
-import { Env } from '../env';
-import { env } from 'hono/adapter';
+} from '@vecrea/oid4vc-verifier-endpoint-core';
 
-export class HonoConfiguration extends AbstractConfiguration {
-  #env?: Env['Bindings'];
+export class ConfigurationImpl extends AbstractConfiguration {
+  readonly #env?: CloudflareEnv['Bindings'];
 
   constructor(c?: Context) {
     super();
-    this.#env = c ? env<Env['Bindings']>(c) : undefined;
+    this.#env = c ? env<CloudflareEnv['Bindings']>(c) : undefined;
   }
 
   jarSigningPrivateJwk = (): string => this.#env?.JAR_SIGNING_PRIVATE_JWK || '';
@@ -25,7 +25,7 @@ export class HonoConfiguration extends AbstractConfiguration {
   clientIdSchemeName = (): ClientIdSchemeName =>
     this.#env?.CLIENT_ID_SCHEME || 'x509_san_dns';
 
-  publicUrl = (): string => this.#env?.PUBLIC_URL_VERIFIER_ENDPOINT || '';
+  publicUrl = (): string => this.#env?.PUBLIC_URL || '';
 
   jarOptionName = (): EmbedOptionName => 'by_reference';
 
@@ -35,6 +35,5 @@ export class HonoConfiguration extends AbstractConfiguration {
 
   maxAge = (): Duration => DurationLuxon.Factory.ofMinutes(5);
 
-  frontendCorsOrigin = (): string =>
-    'https://oid4vc-verifier-frontend-hono.g-trustedweb.workers.dev';
+  frontendCorsOrigin = (): string => this.#env?.CORS_ORIGIN || '';
 }

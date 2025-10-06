@@ -22,7 +22,7 @@ import {
   TransactionId,
   RequestId,
   presentationSchema,
-} from 'oid4vc-verifier-endpoint-core';
+} from '@vecrea/oid4vc-verifier-endpoint-core';
 
 /**
  * Prefix for ID keys in the KV store.

@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'OID4VC Verifier Endpoint'
+
+Parameters:
+  SecretsManagerId:
+    Type: String
+    Default: verifier-endpoint-secrets
+    Description: 'Secrets Manager ID'
+  ApiStageName:
+    Type: String
+    Default: default
+    Description: 'API Gateway stage name'
+  ApiName:
+    Type: String
+    Default: oid4vc-verifier-endpoint-api
+    Description: 'API Gateway API name'
+  PresentationTableName:
+    Type: String
+    Default: oid4vc-verifier-endpoint-presentation-table
+    Description: 'DynamoDB table name for presentation'
+  ImageTag:
+    Type: String
+    Default: latest
+    Description: 'Image tag'
+
+Resources:
+  # Secrets Manager
+  OID4VCVerifierEndpointSecrets:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Ref SecretsManagerId
+      Description: 'OID4VC Verifier Endpoint Secrets'
+      SecretString: >
+        {
+          "JAR_SIGNING_PRIVATE_JWK": "",
+          "CLIENT_ID": "",
+          "CLIENT_ID_SCHEME": "",
+          "PUBLIC_URL": "",
+          "CORS_ORIGIN": ""
+        }
+
+  # DynamoDB Table
+  OID4VCVerifierEndpointPresentationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref PresentationTableName
+      AttributeDefinitions:
+        - AttributeName: key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: key
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  # API Gateway
+  OID4VCVerifierEndpointApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref ApiStageName
+      Name: !Ref ApiName
+
+  # Lambda Function
+  OID4VCVerifierEndpointFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Timeout: 600
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          VerifierEndpointPresentationTable: !Ref OID4VCVerifierEndpointPresentationTable
+          SECRET_NAME: !Ref OID4VCVerifierEndpointSecrets
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OID4VCVerifierEndpointPresentationTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref OID4VCVerifierEndpointSecrets
+      Events:
+        InitTransaction:
+          Type: Api
+          Properties:
+            Path: /ui/presentations
+            Method: POST
+            RestApiId: !Ref OID4VCVerifierEndpointApi
+        GetWalletResponse:
+          Type: Api
+          Properties:
+            Path: /ui/presentations/{proxy}
+            Method: GET
+            RestApiId: !Ref OID4VCVerifierEndpointApi
+        RequestJWT:
+          Type: Api
+          Properties:
+            Path: /wallet/request.jwt/{proxy}
+            Method: GET
+            RestApiId: !Ref OID4VCVerifierEndpointApi
+        PresentationDefinition:
+          Type: Api
+          Properties:
+            Path: /wallet/pd/{proxy}
+            Method: GET
+            RestApiId: !Ref OID4VCVerifierEndpointApi
+        WalletResponse:
+          Type: Api
+          Properties:
+            Path: /wallet/direct_post/
+            Method: POST
+            RestApiId: !Ref OID4VCVerifierEndpointApi
+        PublicJWKSet:
+          Type: Api
+          Properties:
+            Path: /wallet/public-keys.json
+            Method: GET
+            RestApiId: !Ref OID4VCVerifierEndpointApi
+        JarmJWKSet:
+          Type: Api
+          Properties:
+            Path: /wallet/jarm/{proxy}/jwks.json
+            Method: GET
+            RestApiId: !Ref OID4VCVerifierEndpointApi
+    Metadata:
+      DockerTag: !Ref ImageTag
+      DockerContext: .
+      Dockerfile: Dockerfile
